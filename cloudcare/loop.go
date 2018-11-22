@@ -53,14 +53,14 @@ func loop(s *Storage) {
 func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (err error) {
 	level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
 
-	defer func() {
-		if err == nil {
-			//configSuccess.Set(1)
-			//configSuccessTime.SetToCurrentTime()
-		} else {
-			//configSuccess.Set(0)
-		}
-	}()
+	// defer func() {
+	// 	if err == nil {
+	// 		//configSuccess.Set(1)
+	// 		//configSuccessTime.SetToCurrentTime()
+	// 	} else {
+	// 		//configSuccess.Set(0)
+	// 	}
+	// }()
 
 	conf, err := config.LoadFile(filename)
 	if err != nil {
