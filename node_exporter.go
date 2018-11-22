@@ -18,11 +18,13 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"sort"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/version"
+	"github.com/prometheus/node_exporter/cloudcare"
 	"github.com/prometheus/node_exporter/collector"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -139,6 +141,10 @@ func main() {
 			"web.disable-exporter-metrics",
 			"Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).",
 		).Bool()
+		singleton = kingpin.Flag(
+			"singleton",
+			"run as single",
+		).Bool()
 	)
 
 	log.AddFlags(kingpin.CommandLine)
@@ -160,8 +166,16 @@ func main() {
 			</html>`))
 	})
 
+	if *singleton {
+		go func() {
+			time.Sleep(1 * time.Second)
+			cloudcare.Start()
+		}()
+	}
+
 	log.Infoln("Listening on", *listenAddress)
 	if err := http.ListenAndServe(*listenAddress, nil); err != nil {
 		log.Fatal(err)
 	}
+
 }

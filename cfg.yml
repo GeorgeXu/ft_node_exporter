@@ -1,0 +1,7 @@
+global:
+ scrape_interval: 10s
+ key: "cctest"
+
+
+remote_write:
+ - url: "http://10.100.3.186:9527/v1/write"
