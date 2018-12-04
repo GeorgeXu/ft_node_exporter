@@ -52,10 +52,10 @@ func newHandler(includeExporterMetrics bool) *handler {
 			prometheus.NewGoCollector(),
 		)
 	}
-	if innerHandler, err := h.innerHandler(); err != nil {
+	if ih, err := h.innerHandler(); err != nil {
 		log.Fatalf("Couldn't create metrics handler: %s", err)
 	} else {
-		h.unfilteredHandler = innerHandler
+		h.unfilteredHandler = ih
 	}
 	return h
 }

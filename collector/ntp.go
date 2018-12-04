@@ -77,6 +77,7 @@ func NewNtpCollector() (Collector, error) {
 			"NTPD stratum.",
 			nil, nil,
 		), prometheus.GaugeValue},
+
 		leap: typedDesc{prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, ntpSubsystem, "leap"),
 			"NTPD leap second indicator, 2 bits.",

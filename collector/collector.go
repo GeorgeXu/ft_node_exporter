@@ -68,6 +68,8 @@ func registerCollector(collector string, isDefaultEnabled bool, factory func() (
 	collectorState[collector] = flag
 
 	factories[collector] = factory
+
+	log.Infof("regist %s collector: %s", collector, helpDefaultState)
 }
 
 // NodeCollector implements the prometheus.Collector interface.
@@ -88,10 +90,11 @@ func NewNodeCollector(filters ...string) (*NodeCollector, error) {
 		}
 		f[filter] = true
 	}
+
 	collectors := make(map[string]Collector)
 	for key, enabled := range collectorState {
 		if *enabled {
-			collector, err := factories[key]()
+			collector, err := factories[key]() // call NewxxxCollector()
 			if err != nil {
 				return nil, err
 			}
