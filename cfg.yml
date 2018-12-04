@@ -1,7 +1,6 @@
 global:
- scrape_interval: 10s
- key: "cctest"
-
-
-remote_write:
- - url: "http://10.100.3.186:9527/v1/write"
+  unique_id: uid111
+  instance_id: asdfg
+  ak: aaa
+  sk: uBZGx+GSlsCjBcHZzQlVLWrp8HAcgI9a++4davpLoc2fbr2011hUo22CI9Y6AbJ7O6GjCZPIjhkrRN5NGC9mqWSg4zxydp4w4/M04QVt+CJMlUht8cm8s0LvdIEuuuIrCIqshnuIhRCbF22A0S5lew3oJOH5RgxfWnKXYAKOuMk=
+  port: "9100"

@@ -145,7 +145,7 @@ func (*QueueManager) NeedsThrottling() bool {
 // Start the queue manager sending samples to the remote storage.
 // Does not block.
 func (t *QueueManager) Start() {
-	t.wg.Add(2)
+	//t.wg.Add(2)
 	//go t.updateShardsLoop()
 	//go t.reshardLoop()
 

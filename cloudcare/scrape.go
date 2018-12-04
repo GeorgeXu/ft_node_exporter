@@ -22,8 +22,11 @@ const acceptHeader = `application/openmetrics-text; version=0.0.1,text/plain;ver
 
 var userAgentHeader = fmt.Sprintf("Prometheus/%s", version.Version)
 
-func (s *scrape) scrape(w io.Writer) (string, error) {
-	url := "http://0.0.0.0:9100/metrics"
+func (s *scrape) scrape(w io.Writer, scrapeurl string) (string, error) {
+	url := fmt.Sprintf("http://0.0.0.0:%s/metrics", GetListenPort())
+	if scrapeurl != "" {
+		url = scrapeurl
+	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err

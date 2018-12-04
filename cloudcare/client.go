@@ -4,6 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/md5"
+	"crypto/sha1"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -57,8 +62,40 @@ type recoverableError struct {
 	error
 }
 
+///  content  ---  上传的数据  body
+///  contentType ---- 上传数据 格式  如“application/json”
+///  dateStr  ----- header "Date"
+///  key  ----- header "X-Prometheus-Key"
+///  method ----  http request method ,eg PUT，GET，POST，HEAD，DELETE
+///  skVal  -----  Access key secret
+func generateAuthorization(content []byte, contentType string, dateStr string, key string, method string, skVal string) string {
+	h := md5.New()
+	h.Write(content)
+	cipherStr := h.Sum(nil)
+
+	hex.EncodeToString(cipherStr)
+	mac := hmac.New(sha1.New, []byte(skVal))
+	mac.Write([]byte(method + "\n" + hex.EncodeToString(cipherStr) + "\n" + contentType + "\n" + dateStr + "\n" + key))
+	sig := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+	return sig
+}
+
 // Store sends a batch of samples to the HTTP endpoint.
 func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
+
+	for _, t := range req.Timeseries {
+		t.Labels = append(t.Labels, &prompb.Label{
+			Name:  "instance_id",
+			Value: thecfg.GlobalConfig.InstanceID,
+		})
+		if thecfg.GlobalConfig.Host != "" {
+			t.Labels = append(t.Labels, &prompb.Label{
+				Name:  "host",
+				Value: thecfg.GlobalConfig.Host,
+			})
+		}
+	}
+
 	data, err := proto.Marshal(req)
 	if err != nil {
 		return err
@@ -77,10 +114,15 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	// level.Debug(c.logger).Log("msg", "snappy ratio", 1.0-float64(len(compressed))/float64(len(data)))
 	level.Debug(c.logger).Log("msg", "snappy ratio", len(compressed), len(data))
 
+	date := time.Now().UTC().Format(http.TimeFormat)
+
 	httpReq.Header.Add("Content-Encoding", "snappy")
 	httpReq.Header.Set("Content-Type", "application/x-protobuf")
 	httpReq.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
-	httpReq.Header.Set("X-Prometheus-Key", thecfg.GlobalConfig.Key)
+	//httpReq.Header.Set("X-Prometheus-Key", thecfg.GlobalConfig.Key)
+	httpReq.Header.Set("X-Carrier-Key", thecfg.GlobalConfig.UniqueID)
+	httpReq.Header.Set("X-Carrier-Date", date)
+	httpReq.Header.Set("X-Carrier-Authorization", "node "+thecfg.GlobalConfig.AK+":"+generateAuthorization(compressed, "application/x-protobuf", date, thecfg.GlobalConfig.UniqueID, http.MethodPost, thecfg.GlobalConfig.SK))
 	httpReq = httpReq.WithContext(ctx)
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)

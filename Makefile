@@ -85,7 +85,9 @@ $(eval $(call goarch_pair,amd64,386))
 $(eval $(call goarch_pair,mips64,mips))
 $(eval $(call goarch_pair,mips64el,mipsel))
 
-all: style vet staticcheck checkmetrics checkrules build test $(cross-test) $(test-e2e)
+#all: style vet staticcheck checkmetrics checkrules build test $(cross-test) $(test-e2e)
+
+#all: build
 
 .PHONY: test
 test: collector/fixtures/sys/.unpacked

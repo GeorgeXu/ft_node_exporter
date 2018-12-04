@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
+	config_util "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/pkg/labels"
@@ -57,38 +58,64 @@ func (s *Storage) ApplyConfig(conf *config.Config) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	remoteCfgs := conf.RemoteWriteConfigs
+	//remoteCfgs := conf.RemoteWriteConfigs
 
 	newQueues := []*QueueManager{}
 
-	for i, rwCfg := range remoteCfgs {
-
-		clientCfg := &ClientConfig{
-			URL:              rwCfg.URL,
-			Timeout:          rwCfg.RemoteTimeout,
-			HTTPClientConfig: rwCfg.HTTPClientConfig,
-		}
-
-		c, err := NewClient(i, s.logger, clientCfg)
-		if err != nil {
-			return err
-		}
-
-		newQueues = append(newQueues, newQueueManager(
-			s.logger,
-			rwCfg.QueueConfig,
-			conf.GlobalConfig.ExternalLabels,
-			rwCfg.WriteRelabelConfigs,
-			c,
-			s.flushDeadline,
-		))
+	rwCfg := config.DefaultRemoteWriteConfig
+	rwCfg.URL = &config_util.URL{
+		URL: GetDataBridgeUrl(),
 	}
+
+	clientCfg := &ClientConfig{
+		URL:              rwCfg.URL,
+		Timeout:          rwCfg.RemoteTimeout,
+		HTTPClientConfig: rwCfg.HTTPClientConfig,
+	}
+
+	c, err := NewClient(0, s.logger, clientCfg)
+	if err != nil {
+		return err
+	}
+
+	newQueues = append(newQueues, newQueueManager(
+		s.logger,
+		rwCfg.QueueConfig,
+		conf.GlobalConfig.ExternalLabels,
+		rwCfg.WriteRelabelConfigs,
+		c,
+		s.flushDeadline,
+	))
+
+	// for i, rwCfg := range remoteCfgs {
+
+	// 	clientCfg := &ClientConfig{
+	// 		URL:              rwCfg.URL,
+	// 		Timeout:          rwCfg.RemoteTimeout,
+	// 		HTTPClientConfig: rwCfg.HTTPClientConfig,
+	// 	}
+
+	// 	c, err := NewClient(i, s.logger, clientCfg)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	newQueues = append(newQueues, newQueueManager(
+	// 		s.logger,
+	// 		rwCfg.QueueConfig,
+	// 		conf.GlobalConfig.ExternalLabels,
+	// 		rwCfg.WriteRelabelConfigs,
+	// 		c,
+	// 		s.flushDeadline,
+	// 	))
+	// }
 
 	for _, q := range s.queues {
 		q.Stop()
 	}
 
 	s.queues = newQueues
+
 	for _, q := range s.queues {
 		q.Start()
 	}

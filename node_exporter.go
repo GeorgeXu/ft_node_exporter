@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
+	"net/url"
 	"sort"
 	"time"
 
@@ -129,10 +130,10 @@ func (h *handler) innerHandler(filters ...string) (http.Handler, error) {
 
 func main() {
 	var (
-		listenAddress = kingpin.Flag(
-			"web.listen-address",
-			"Address on which to expose metrics and web interface.",
-		).Default(":9100").String()
+		// listenAddress = kingpin.Flag(
+		// 	"web.listen-address",
+		// 	"Address on which to expose metrics and web interface.",
+		// ).Default(":9100").String()
 		metricsPath = kingpin.Flag(
 			"web.telemetry-path",
 			"Path under which to expose metrics.",
@@ -141,16 +142,65 @@ func main() {
 			"web.disable-exporter-metrics",
 			"Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).",
 		).Bool()
-		singleton = kingpin.Flag(
-			"singleton",
-			"run as single",
-		).Bool()
+
+		singleton  = kingpin.Flag("singleton", "run as single").Bool()
+		init       = kingpin.Flag("init", `init collector`).Bool()
+		upgrade    = kingpin.Flag("upgrade", ``).Bool()
+		host       = kingpin.Flag("host", `eg. ip addr`).String()
+		remotehost = kingpin.Flag("remotehost", `data bridge addr`).String()
+		scrapehost = kingpin.Flag("scrapehost", `for test`).String()
+		uniqueid   = kingpin.Flag("unique_id", ``).String()
+		instanceid = kingpin.Flag("instance_id", ``).String()
+		ak         = kingpin.Flag("ak", ``).String()
+		sk         = kingpin.Flag("sk", ``).String()
+		port       = kingpin.Flag("port", `web listen port`).Default("9100").String()
 	)
 
 	log.AddFlags(kingpin.CommandLine)
 	kingpin.Version(version.Print("node_exporter"))
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
+
+	if *init {
+		args := &cloudcare.CCCmdArgs{
+			Host:       *host,
+			UniqueID:   *uniqueid,
+			InstanceID: *instanceid,
+			AK:         *ak,
+			SK:         *sk,
+			Port:       *port,
+		}
+		if err := cloudcare.InitHandler(args, *singleton); err != nil {
+			panic(err)
+		}
+
+		return
+
+	} else if *upgrade {
+
+	}
+
+	if err := cloudcare.ReloadConfig(); err != nil {
+		panic(err)
+	}
+
+	if *singleton {
+		var scu *url.URL
+		var err error
+		if *scrapehost != "" {
+			scu, err = url.Parse(*scrapehost)
+			if err != nil {
+				panic(err)
+			}
+		}
+		if err := cloudcare.Start(*remotehost, *scrapehost); err != nil {
+			panic(err)
+		}
+		if scu != nil {
+			time.Sleep(60 * 60 * time.Second)
+			return
+		}
+	}
 
 	log.Infoln("Starting node_exporter", version.Info())
 	log.Infoln("Build context", version.BuildContext())
@@ -166,15 +216,10 @@ func main() {
 			</html>`))
 	})
 
-	if *singleton {
-		go func() {
-			time.Sleep(1 * time.Second)
-			cloudcare.Start()
-		}()
-	}
+	listenAddress := fmt.Sprintf("0.0.0.0:%s", cloudcare.GetListenPort())
 
-	log.Infoln("Listening on", *listenAddress)
-	if err := http.ListenAndServe(*listenAddress, nil); err != nil {
+	log.Infoln("Listening on", listenAddress)
+	if err := http.ListenAndServe(listenAddress, nil); err != nil {
 		log.Fatal(err)
 	}
 

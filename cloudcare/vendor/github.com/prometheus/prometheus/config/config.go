@@ -49,6 +49,14 @@ func Load(s string) (*Config, error) {
 	return cfg, nil
 }
 
+func (cfg *Config) StoreToFile(path string) error {
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, data, 0664)
+}
+
 // LoadFile parses the given YAML file into a Config.
 func LoadFile(filename string) (*Config, error) {
 	content, err := ioutil.ReadFile(filename)
@@ -268,7 +276,13 @@ type GlobalConfig struct {
 	EvaluationInterval model.Duration `yaml:"evaluation_interval,omitempty"`
 	// The labels to add to any timeseries that this Prometheus instance scrapes.
 	ExternalLabels model.LabelSet `yaml:"external_labels,omitempty"`
-	Key            string         `yaml:"key,omitempty"`
+	//Key            string         `yaml:"key,omitempty"`
+	Host       string `yaml:"host,omitempty"`
+	UniqueID   string `yaml:"unique_id,omitempty"`
+	InstanceID string `yaml:"instance_id,omitempty"`
+	AK         string `yaml:"ak,omitempty"`
+	SK         string `yaml:"sk,omitempty"`
+	Port       string `yaml:"port,omitempty"`
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
