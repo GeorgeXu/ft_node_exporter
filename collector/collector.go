@@ -96,7 +96,8 @@ func NewNodeCollector(filters ...string) (*NodeCollector, error) {
 		if *enabled {
 			collector, err := factories[key]() // call NewxxxCollector()
 			if err != nil {
-				return nil, err
+				continue
+				//return nil, err
 			}
 			if len(f) == 0 || f[key] {
 				collectors[key] = collector
