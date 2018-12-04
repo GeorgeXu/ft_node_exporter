@@ -129,8 +129,10 @@ func reloadConfig(filename string) (err error) {
 
 	thecfg = conf
 
-	thecfg.GlobalConfig.SK = string(xorDecode(thecfg.GlobalConfig.SK))
-	fmt.Printf("sk: %s", thecfg.GlobalConfig.SK)
+	if thecfg.GlobalConfig.SK != "" {
+		thecfg.GlobalConfig.SK = string(xorDecode(thecfg.GlobalConfig.SK))
+		fmt.Printf("sk: %s", thecfg.GlobalConfig.SK)
+	}
 
 	// failed := false
 	// for _, rl := range rls {
