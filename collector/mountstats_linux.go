@@ -95,7 +95,7 @@ type nfsDeviceIdentifier struct {
 }
 
 func init() {
-	registerCollector("mountstats", defaultDisabled, NewMountStatsCollector)
+	registerCollector("mountstats", defaultEnabled, NewMountStatsCollector)
 }
 
 // NewMountStatsCollector returns a new Collector exposing NFS statistics.

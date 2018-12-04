@@ -33,7 +33,7 @@ type processCollector struct {
 }
 
 func init() {
-	registerCollector("processes", defaultDisabled, NewProcessStatCollector)
+	registerCollector("processes", defaultEnabled, NewProcessStatCollector)
 }
 
 // NewProcessStatCollector returns a new Collector exposing process data read from the proc filesystem.

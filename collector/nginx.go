@@ -65,7 +65,7 @@ var (
 )
 
 func init() {
-	registerCollector(ngxSubSystem, defaultDisabled, NewNginxCollector)
+	registerCollector(ngxSubSystem, defaultEnabled, NewNginxCollector)
 }
 
 func NewNginxCollector() (Collector, error) {

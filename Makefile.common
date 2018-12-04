@@ -117,7 +117,7 @@ common-docker-tag-latest:
 
 .PHONY: promu
 promu:
-	GOOS= GOARCH= $(GO) get -u github.com/prometheus/promu
+	#GOOS= GOARCH= $(GO) get -u github.com/prometheus/promu
 
 .PHONY: $(STATICCHECK)
 $(STATICCHECK):

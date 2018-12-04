@@ -20,11 +20,12 @@ import (
 	"regexp"
 	"strings"
 
+	"math"
+
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/log"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"math"
 )
 
 var (
@@ -52,7 +53,7 @@ type systemdCollector struct {
 var unitStatesName = []string{"active", "activating", "deactivating", "inactive", "failed"}
 
 func init() {
-	registerCollector("systemd", defaultDisabled, NewSystemdCollector)
+	registerCollector("systemd", defaultEnabled, NewSystemdCollector)
 }
 
 // NewSystemdCollector returns a new Collector exposing systemd statistics.
