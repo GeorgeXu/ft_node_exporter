@@ -91,28 +91,8 @@ do
       shift
       ;;
 
-    --corsair_port)
+    --corsair-port)
       corsair_port="$2"
-      shift
-      ;;
-
-    --mssqlproxyport)
-      mssql_proxy_port="$2"
-      shift
-      ;;
-
-    --AccessKeyId)
-      access_key_id="$2"
-      shift
-      ;;
-
-    --AccessKeySecret)
-      access_key_secret="$2"
-      shift
-      ;;
-
-    --RegionId)
-      region_id="$2"
       shift
       ;;
 
@@ -227,7 +207,7 @@ if [ $upgrade_flag -eq 0 ]; then
     --cfg "${yaml_cfg}" \
     --remotehost "${kodo_host}" \
     --host "${corsair_hostname}" \
-		--port "${corsair_port}"
+		--port "${corsair_port}" ; then
 
     printf "ok\n" | tee -a ${install_log}
   else

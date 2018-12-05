@@ -46,7 +46,7 @@ var (
 
 	flagRelease = flag.String(`release`, ``, `build for local/test/alpha/preprod/release`)
 
-	flagReleaseAgent = flag.String(`release-agent`, ``, `upload build agent to OSS: local/test/alpha/release/preprod`)
+	flagPub = flag.Bool(`pub`, false, `publish binaries to OSS: local/test/alpha/release/preprod`)
 
 	workDir string
 	homeDir string
@@ -248,19 +248,19 @@ func releaseAgent() {
 	var ak, sk, bucket, objPath, ossHost, prefix string
 
 	// 在你本地设置好这些 oss-key 环境变量
-	switch *flagReleaseAgent {
+	switch *flagRelease {
 	case `test`, `local`, `release`, `preprod`, `alpha`:
-		tag := strings.ToUpper(*flagReleaseAgent)
-		ak = os.Getenv(tag + "_KODO_AGENT_OSS_ACCESS_KEY")
-		sk = os.Getenv(tag + "_KODO_AGENT_OSS_SECRET_KEY")
-		bucket = os.Getenv(tag + "_KODO_AGENT_OSS_BUCKET")
-		objPath = os.Getenv(tag + "_KODO_AGENT_OSS_PATH")
-		ossHost = os.Getenv(tag + "_KODO_AGENT_OSS_HOST")
+		tag := strings.ToUpper(*flagRelease)
+		ak = os.Getenv(tag + "_CORSAIR_AGENT_OSS_ACCESS_KEY")
+		sk = os.Getenv(tag + "_CORSAIR_AGENT_OSS_SECRET_KEY")
+		bucket = os.Getenv(tag + "_CORSAIR_AGENT_OSS_BUCKET")
+		objPath = os.Getenv(tag + "_CORSAIR_AGENT_OSS_PATH")
+		ossHost = os.Getenv(tag + "_CORSAIR_AGENT_OSS_HOST")
 	default:
-		log.Fatalf("unknown release type: %s", *flagReleaseAgent)
+		log.Fatalf("unknown release type: %s", *flagRelease)
 	}
 
-	prefix = path.Join(*flagPubDir, *flagReleaseAgent)
+	prefix = path.Join(*flagPubDir, *flagRelease)
 
 	if ak == "" || sk == "" {
 		log.Fatal("[fatal] oss access key or secret key missing")
@@ -279,15 +279,15 @@ func releaseAgent() {
 		log.Fatalf("[fatal] %s", err)
 	}
 
-	// 请求线上的 agent 版本信息
-	url := fmt.Sprintf("http://%s.%s/%s", bucket, ossHost, `version`)
+	// 请求线上的 corsair 版本信息
+	url := fmt.Sprintf("http://%s.%s/%s/%s/%s", bucket, ossHost, *flagName, *flagRelease, `version`)
 	curVd := getCurrentVersionInfo(url)
 
 	if curVd != nil {
 		vOld := strings.Split(curVd.Version, `-`)
 		vCur := strings.Split(git.Version, `-`)
 		if vOld[0] == vCur[0] && vOld[1] == vCur[1] && vOld[2] == vCur[2] {
-			log.Printf("[warn] Current OSS agent verison is the newest (%s <=> %s). Exit now.", curVd.Version, git.Version)
+			log.Printf("[warn] Current OSS corsair verison is the newest (%s <=> %s). Exit now.", curVd.Version, git.Version)
 			os.Exit(0)
 		}
 
@@ -330,7 +330,7 @@ func main() {
 
 	curVersion = bytes.TrimSpace(curVersion)
 
-	if *flagReleaseAgent != "" {
+	if *flagPub {
 		releaseAgent()
 		return
 	}
@@ -376,7 +376,7 @@ const (
 	// create git/git.go
 	ioutil.WriteFile(`git/git.go`, []byte(buildInfo), 0666)
 
-	if *flagKodoHost != "" { // build agent
+	if *flagKodoHost != "" { // build corsair
 
 		// create version info
 		vd := &versionDesc{
@@ -415,6 +415,7 @@ const (
 			Name         string
 			DownloadAddr string
 			Version      string
+			Release      string
 			Ssl          int
 			Port         int
 		}
@@ -423,6 +424,7 @@ const (
 			KodoHost:     *flagKodoHost,
 			DownloadAddr: *flagDownloadAddr,
 			Name:         *flagName,
+			Release:      *flagRelease,
 			Version:      string(curVersion),
 			Ssl:          *flagSsl,
 			Port:         *flagPort,
@@ -451,7 +453,7 @@ const (
 		if err != nil {
 			log.Fatal(err)
 		}
-	} // endof build agent
+	} // endof build corsair
 
 	if *flagShowArch {
 		fmt.Printf("available archs:\n\t%s\n", strings.Join(osarches, "\n\t"))

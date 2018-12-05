@@ -27,6 +27,7 @@ import (
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/node_exporter/cloudcare"
 	"github.com/prometheus/node_exporter/collector"
+	"github.com/prometheus/node_exporter/git"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -143,24 +144,34 @@ func main() {
 			"Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).",
 		).Bool()
 
-		singleton  = kingpin.Flag("singleton", "run as single").Bool()
-		init       = kingpin.Flag("init", `init collector`).Bool()
-		upgrade    = kingpin.Flag("upgrade", ``).Bool()
-		host       = kingpin.Flag("host", `eg. ip addr`).String()
-		remotehost = kingpin.Flag("remotehost", `data bridge addr`).String()
-		scrapehost = kingpin.Flag("scrapehost", `for test`).String()
-		uniqueid   = kingpin.Flag("unique-id", ``).String()
-		instanceid = kingpin.Flag("instance_id", ``).String()
-		ak         = kingpin.Flag("ak", ``).String()
-		sk         = kingpin.Flag("sk", ``).String()
-		port       = kingpin.Flag("port", `web listen port`).Default("9100").String()
-		cfgFile    = kingpin.Flag("cfg", `configure file`).Default("cfg.yml").String()
+		singleton   = kingpin.Flag("singleton", "run as single").Bool()
+		init        = kingpin.Flag("init", `init collector`).Bool()
+		upgrade     = kingpin.Flag("upgrade", ``).Bool()
+		host        = kingpin.Flag("host", `eg. ip addr`).String()
+		remoteHost  = kingpin.Flag("remote-host", `data bridge addr`).String()
+		scrapehost  = kingpin.Flag("scrapehost", `for test`).String()
+		uniqueid    = kingpin.Flag("unique-id", ``).String()
+		instanceid  = kingpin.Flag("instance-id", ``).String()
+		ak          = kingpin.Flag("ak", ``).String()
+		sk          = kingpin.Flag("sk", ``).String()
+		port        = kingpin.Flag("port", `web listen port`).Default("9100").String()
+		cfgFile     = kingpin.Flag("cfg", `configure file`).Default("cfg.yml").String()
+		versionInfo = kingpin.Flag("ver", "show version info").Bool()
 	)
 
 	log.AddFlags(kingpin.CommandLine)
-	kingpin.Version(version.Print("node_exporter"))
+	// kingpin.Version(version.Print("node_exporter"))
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
+
+	if *versionInfo {
+		fmt.Printf(`Version:        %s
+Sha1:           %s
+Build At:       %s
+Golang Version: %s
+`, git.Version, git.Sha1, git.BuildAt, git.Golang)
+		return
+	}
 
 	if *init {
 		args := &cloudcare.CCCmdArgs{
@@ -194,7 +205,7 @@ func main() {
 				panic(err)
 			}
 		}
-		if err := cloudcare.Start(*remotehost, *scrapehost); err != nil {
+		if err := cloudcare.Start(*remoteHost, *scrapehost); err != nil {
 			panic(err)
 		}
 		if scu != nil {
@@ -203,8 +214,8 @@ func main() {
 		}
 	}
 
-	log.Infoln("Starting node_exporter", version.Info())
-	log.Infoln("Build context", version.BuildContext())
+	//log.Infoln("Starting node_exporter", version.Info())
+	//log.Infoln("Build context", version.BuildContext())
 
 	http.Handle(*metricsPath, newHandler(!*disableExporterMetrics))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

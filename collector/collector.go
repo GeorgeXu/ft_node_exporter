@@ -69,7 +69,7 @@ func registerCollector(collector string, isDefaultEnabled bool, factory func() (
 
 	factories[collector] = factory
 
-	log.Infof("regist %s collector: %s", collector, helpDefaultState)
+	// log.Infof("regist %s collector: %s", collector, helpDefaultState)
 }
 
 // NodeCollector implements the prometheus.Collector interface.
