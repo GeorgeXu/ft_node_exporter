@@ -15,7 +15,7 @@ if ! mkdir -p "${install_dir}" >/dev/null 2>&1; then
     exit 1
 fi
 
-download_url="http://cloudcare-carrier.oss-cn-hangzhou.aliyuncs.com/node_exporter"
+download_url="http://cloudcare-carrier.oss-cn-hangzhou.aliyuncs.com/corsair"
 
 unique_id=
 instance_id=
@@ -154,6 +154,7 @@ else
 fi
 
 if [ $singleton -eq 1 ]; then
+
     ${binary} --singleton \
         ${remote_host:+$(echo -n "--remotehost ${remote_host}")}
 
