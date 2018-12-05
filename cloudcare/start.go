@@ -110,17 +110,6 @@ func loop(s *Storage, scrapeurl string) {
 }
 
 func reloadConfig(filename string) (err error) {
-	//level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
-
-	// defer func() {
-	// 	if err == nil {
-	// 		//configSuccess.Set(1)
-	// 		//configSuccessTime.SetToCurrentTime()
-	// 	} else {
-	// 		//configSuccess.Set(0)
-	// 	}
-	// }()
-
 	conf, err := config.LoadFile(filename)
 	if err != nil {
 		//fmt.Printf("load err: %s", err)
@@ -132,17 +121,6 @@ func reloadConfig(filename string) (err error) {
 	thecfg.GlobalConfig.SK = string(xorDecode(thecfg.GlobalConfig.SK))
 	fmt.Printf("sk: %s", thecfg.GlobalConfig.SK)
 
-	// failed := false
-	// for _, rl := range rls {
-	// 	if err := rl(conf); err != nil {
-	// 		level.Error(logger).Log("msg", "Failed to apply configuration", "err", err)
-	// 		failed = true
-	// 	}
-	// }
-	// if failed {
-	// 	return fmt.Errorf("one or more errors occurred while applying the new configuration (--config.file=%q)", filename)
-	// }
-	// level.Info(logger).Log("msg", "Completed loading of configuration file", "filename", filename)
 	return nil
 }
 
@@ -150,8 +128,8 @@ var remoteStorage *Storage
 var thecfg *config.Config
 var chStop chan struct{}
 
-func ReloadConfig() error {
-	return reloadConfig("cfg.yml")
+func ReloadConfig(f string) error {
+	return reloadConfig(f)
 }
 
 func Start(remotehost string, scrapehost string) error {

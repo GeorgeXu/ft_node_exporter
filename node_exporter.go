@@ -149,11 +149,12 @@ func main() {
 		host       = kingpin.Flag("host", `eg. ip addr`).String()
 		remotehost = kingpin.Flag("remotehost", `data bridge addr`).String()
 		scrapehost = kingpin.Flag("scrapehost", `for test`).String()
-		uniqueid   = kingpin.Flag("unique_id", ``).String()
+		uniqueid   = kingpin.Flag("unique-id", ``).String()
 		instanceid = kingpin.Flag("instance_id", ``).String()
 		ak         = kingpin.Flag("ak", ``).String()
 		sk         = kingpin.Flag("sk", ``).String()
 		port       = kingpin.Flag("port", `web listen port`).Default("9100").String()
+		cfgFile    = kingpin.Flag("cfg", `configure file`).Default("cfg.yml").String()
 	)
 
 	log.AddFlags(kingpin.CommandLine)
@@ -180,7 +181,7 @@ func main() {
 
 	}
 
-	if err := cloudcare.ReloadConfig(); err != nil {
+	if err := cloudcare.ReloadConfig(*cfgFile); err != nil {
 		panic(err)
 	}
 
