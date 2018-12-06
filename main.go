@@ -42,11 +42,11 @@ var (
 		"Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).",
 	).Bool()
 
-	flagSingleton           = kingpin.Flag("singleton", "run as single node").Bool()
+	flagSingleMode          = kingpin.Flag("single-mode", "run as single node").Bool()
 	flagInit                = kingpin.Flag("init", `init collector`).Bool()
 	flagUpgrade             = kingpin.Flag("upgrade", ``).Bool()
 	flagHost                = kingpin.Flag("host", `eg. ip addr`).String()
-	flagRemoteHost          = kingpin.Flag("remote-host", `data bridge addr`).Default("kodo.cloudcare.com").String()
+	flagRemoteHost          = kingpin.Flag("remote-host", `data bridge addr`).Default("http://kodo.cloudcare.com/v1/write").String()
 	flagScrapeInterval      = kingpin.Flag("scrape-interval", "frequency to upload data").Default("15").Int()
 	flagUniqueID            = kingpin.Flag("unique-id", "User ID").String()
 	flagInstanceID          = kingpin.Flag("instance-id", "instance ID").String()
@@ -159,8 +159,8 @@ func (h *handler) innerHandler(filters ...string) (http.Handler, error) {
 }
 
 func initCfg() error {
-	if *flagSingleton {
-		cfg.Cfg.Singleton = true
+	if *flagSingleMode {
+		cfg.Cfg.SingleMode = true
 	}
 
 	if *flagHost != "" {
@@ -193,7 +193,7 @@ func initCfg() error {
 	if *flagSK == "" {
 		log.Fatal("invalid sk")
 	} else {
-		cfg.Cfg.SK = *flagSK
+		cfg.Cfg.SK = cfg.XorEncode(*flagSK)
 	}
 
 	cfg.Cfg.Port = *flagPort
@@ -227,7 +227,7 @@ Golang Version: %s
 		cfg.LoadConfig(*flagCfgFile)
 	}
 
-	if cfg.Cfg.Singleton {
+	if cfg.Cfg.SingleMode {
 		var scu *url.URL
 
 		if err := cloudcare.Start(cfg.Cfg.RemoteHost, ""); err != nil {

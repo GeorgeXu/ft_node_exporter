@@ -2,6 +2,7 @@ package cloudcare
 
 import (
 	"context"
+	"encoding/json"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -61,6 +62,14 @@ type QueueManager struct {
 
 	samplesIn, samplesOut, samplesOutDuration *ewmaRate
 	integralAccumulator                       float64
+}
+
+func dumpSamples(samples model.Samples) (string, error) {
+	b, err := json.Marshal(samples)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func newQueueManager(logger log.Logger, cfg config.QueueConfig, externalLabels model.LabelSet, relabelConfigs []*config.RelabelConfig, client StorageClient, flushDeadline time.Duration) *QueueManager {
@@ -344,6 +353,11 @@ func (s *shards) enqueue(sample *model.Sample) bool {
 	}
 }
 
+func addTags(s *model.Sample) {
+	s.Metric[model.LabelName(`instance_id`)] = model.LabelValue(CorsairInstanceID)
+	s.Metric[model.LabelName(`host`)] = model.LabelValue(CorsairHost)
+}
+
 func (s *shards) runShard(i int) {
 	defer func() {
 		if atomic.AddInt32(&s.running, -1) == 0 {
@@ -384,7 +398,9 @@ func (s *shards) runShard(i int) {
 				return
 			}
 
-			//queueLength.WithLabelValues(s.qm.queueName).Dec()
+			// queueLength.WithLabelValues(s.qm.queueName).Dec()
+			addTags(sample)
+
 			pendingSamples = append(pendingSamples, sample)
 
 			if len(pendingSamples) >= s.qm.cfg.MaxSamplesPerSend {
@@ -421,25 +437,26 @@ func (s *shards) sendSamplesWithBackoff(samples model.Samples) {
 	req := ToWriteRequest(samples)
 
 	for retries := s.qm.cfg.MaxRetries; retries > 0; retries-- {
-		//begin := time.Now()
 		err := s.qm.client.Store(s.ctx, req)
 
-		//sentBatchDuration.WithLabelValues(s.qm.queueName).Observe(time.Since(begin).Seconds())
 		if err == nil {
-			//succeededSamplesTotal.WithLabelValues(s.qm.queueName).Add(float64(len(samples)))
 			return
 		}
 
-		level.Warn(s.qm.logger).Log("msg", "Error sending samples to remote storage", "count", len(samples), "err", err)
+		ds, _ := dumpSamples(samples)
+
+		level.Warn(s.qm.logger).Log("msg",
+			"Error sending samples to remote storage", "samples",
+			ds, "err", err)
+
 		if _, ok := err.(recoverableError); !ok {
 			break
 		}
+
 		time.Sleep(time.Duration(backoff))
 		backoff = backoff * 2
 		if backoff > s.qm.cfg.MaxBackoff {
 			backoff = s.qm.cfg.MaxBackoff
 		}
 	}
-
-	//failedSamplesTotal.WithLabelValues(s.qm.queueName).Add(float64(len(samples)))
 }

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/prometheus/common/version"
+	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/pkg/textparse"
 	"github.com/prometheus/prometheus/pkg/timestamp"
@@ -20,7 +20,7 @@ type scrape struct {
 
 const acceptHeader = `application/openmetrics-text; version=0.0.1,text/plain;version=0.0.4;q=0.5,*/*;q=0.1`
 
-var userAgentHeader = fmt.Sprintf("Prometheus/%s", version.Version)
+var userAgentHeader = fmt.Sprintf("Corsair/%s", git.Version)
 
 func (s *scrape) scrape(w io.Writer, scrapeurl string) (string, error) {
 	url := fmt.Sprintf("http://0.0.0.0:%d/metrics", CorsairPort)
@@ -35,7 +35,6 @@ func (s *scrape) scrape(w io.Writer, scrapeurl string) (string, error) {
 	req.Header.Add("Accept", acceptHeader)
 	req.Header.Add("Accept-Encoding", "gzip")
 	req.Header.Set("User-Agent", userAgentHeader)
-	//req.Header.Set("X-Prometheus-Scrape-Timeout-Seconds", fmt.Sprintf("%f", s.timeout.Seconds()))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -45,7 +44,6 @@ func (s *scrape) scrape(w io.Writer, scrapeurl string) (string, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("server returned HTTP status %s", resp.Status)
-
 	}
 
 	var gziper *gzip.Reader
@@ -100,23 +98,15 @@ func (s *scrape) appendScrape(b []byte, contentType string, ts time.Time) {
 
 		switch et {
 		case textparse.EntryType:
-			//sl.cache.setType(p.Type())
-			//metricName, mType := p.Type()
-			//fmt.Println(string(metricName), mType)
 			continue
 		case textparse.EntryHelp:
-			//sl.cache.setHelp(p.Help())
-			//metricName, mHelp := p.Help()
-			//fmt.Println(string(metricName), string(mHelp))
 			continue
 		case textparse.EntryUnit:
-			//sl.cache.setUnit(p.Unit())
 			continue
 		case textparse.EntryComment:
 			continue
 		default:
 		}
-		//total++
 
 		t := defTime
 		_, tp, v := p.Series()
@@ -124,21 +114,14 @@ func (s *scrape) appendScrape(b []byte, contentType string, ts time.Time) {
 			t = *tp
 		}
 
-		//fmt.Println("series:", string(met))
-		//fmt.Println("value:", v)
-
 		var lset labels.Labels
 
 		_ = p.Metric(&lset)
-		//_ = mets
-		//fmt.Println("mets:", mets)
 
 		if lset == nil {
 			continue
 		}
-		//fmt.Println(lset.String())
 
 		s.storage.Add(lset, t, v)
 	}
-
 }

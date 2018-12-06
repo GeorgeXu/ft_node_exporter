@@ -109,6 +109,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	if err != nil {
 		// Errors from NewRequest are from unparseable URLs, so are not
 		// recoverable.
+		level.Error(c.logger).Log(err.Error())
 		return err
 	}
 
