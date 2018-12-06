@@ -20,6 +20,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/klauspost/compress/snappy"
 	"github.com/prometheus/common/model"
+	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/prometheus/prompb"
 
 	config_util "github.com/prometheus/common/config"
@@ -86,12 +87,12 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	for _, t := range req.Timeseries {
 		t.Labels = append(t.Labels, &prompb.Label{
 			Name:  "instance_id",
-			Value: thecfg.GlobalConfig.InstanceID,
+			Value: CorsairInstanceID,
 		})
-		if thecfg.GlobalConfig.Host != "" {
+		if CorsairHost != "" {
 			t.Labels = append(t.Labels, &prompb.Label{
 				Name:  "host",
-				Value: thecfg.GlobalConfig.Host,
+				Value: CorsairHost,
 			})
 		}
 	}
@@ -111,18 +112,21 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 		return err
 	}
 
-	// level.Debug(c.logger).Log("msg", "snappy ratio", 1.0-float64(len(compressed))/float64(len(data)))
 	level.Debug(c.logger).Log("msg", "snappy ratio", len(compressed), len(data))
 
+	contentType := "application/x-protobuf"
+	contentEncode := "snappy"
 	date := time.Now().UTC().Format(http.TimeFormat)
 
-	httpReq.Header.Add("Content-Encoding", "snappy")
-	httpReq.Header.Set("Content-Type", "application/x-protobuf")
-	httpReq.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
-	//httpReq.Header.Set("X-Prometheus-Key", thecfg.GlobalConfig.Key)
-	httpReq.Header.Set("X-Carrier-Key", thecfg.GlobalConfig.UniqueID)
-	httpReq.Header.Set("X-Carrier-Date", date)
-	httpReq.Header.Set("X-Carrier-Authorization", "node "+thecfg.GlobalConfig.AK+":"+generateAuthorization(compressed, "application/x-protobuf", date, thecfg.GlobalConfig.UniqueID, http.MethodPost, thecfg.GlobalConfig.SK))
+	sig := generateAuthorization(compressed, contentType,
+		date, CorsairUniqueID, http.MethodPost, CorsairSK)
+
+	httpReq.Header.Add("Content-Encoding", contentEncode)
+	httpReq.Header.Set("Content-Type", contentType)
+	httpReq.Header.Set("X-Corsair-Version", git.Version)
+	httpReq.Header.Set("X-Corsair-Key", CorsairUniqueID)
+	httpReq.Header.Set("Date", date)
+	httpReq.Header.Set("Authorization", "node "+CorsairAK+":"+sig)
 	httpReq = httpReq.WithContext(ctx)
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
@@ -156,52 +160,3 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 func (c Client) Name() string {
 	return fmt.Sprintf("%d:%s", c.index, c.url)
 }
-
-// func (c *client) Store(ctx context.Context, req *prompb.WriteRequest) error {
-// 	data, err := proto.Marshal(req)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	compressed := snappy.Encode(nil, data)
-// 	httpReq, err := http.NewRequest("POST", c.url.String(), bytes.NewReader(compressed))
-// 	if err != nil {
-// 		// Errors from NewRequest are from unparseable URLs, so are not
-// 		// recoverable.
-// 		return err
-// 	}
-
-// 	// level.Debug(c.logger).Log("msg", "snappy ratio", 1.0-float64(len(compressed))/float64(len(data)))
-// 	//level.Debug(c.logger).Log("msg", "snappy ratio", len(compressed), len(data))
-
-// 	httpReq.Header.Add("Content-Encoding", "snappy")
-// 	httpReq.Header.Set("Content-Type", "application/x-protobuf")
-// 	httpReq.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
-// 	httpReq.Header.Set("X-Prometheus-Key", cfg.key)
-// 	httpReq = httpReq.WithContext(ctx)
-
-// 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-// 	defer cancel()
-
-// 	httpResp, err := ctxhttp.Do(ctx, c.client, httpReq)
-
-// 	if err != nil {
-// 		// Errors from client.Do are from (for example) network errors, so are
-// 		// recoverable.
-// 		return recoverableError{err}
-// 	}
-// 	defer httpResp.Body.Close()
-
-// 	if httpResp.StatusCode/100 != 2 {
-// 		scanner := bufio.NewScanner(io.LimitReader(httpResp.Body, maxErrMsgLen))
-// 		line := ""
-// 		if scanner.Scan() {
-// 			line = scanner.Text()
-// 		}
-// 		err = fmt.Errorf("server returned HTTP status %s: %s", httpResp.Status, line)
-// 	}
-// 	if httpResp.StatusCode/100 == 5 {
-// 		return recoverableError{err}
-// 	}
-// 	return err
-// }

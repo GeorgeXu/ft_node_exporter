@@ -108,7 +108,7 @@ func runEnv(args, env []string) {
 		cmd.Env = append(os.Environ(), env...)
 	}
 
-	log.Printf("%s %s", strings.Join(env, " "), strings.Join(args, " "))
+	// log.Printf("%s %s", strings.Join(env, " "), strings.Join(args, " "))
 	err := cmd.Run()
 	if err != nil {
 		log.Fatalf("failed to run %v: %v", args, err)
@@ -120,7 +120,7 @@ func run(args ...string) {
 }
 
 func compileArch(bin, goos, goarch, dir string) {
-	log.Printf("building %s.%s/%s(%s)...", bin, goos, goarch, *flagMain)
+	// log.Printf("building %s.%s/%s(%s)...", bin, goos, goarch, *flagMain)
 
 	output := path.Join(dir, bin)
 	if goos == "windows" {
@@ -214,7 +214,7 @@ func compile() {
 	}
 
 	wg.Wait()
-	log.Printf("build %d binaries in %v", len(osarches), time.Since(start))
+	log.Printf("build elapsed %v", time.Since(start))
 }
 
 func getCurrentVersionInfo(url string) *versionDesc {
@@ -227,6 +227,7 @@ func getCurrentVersionInfo(url string) *versionDesc {
 	}
 
 	if resp.StatusCode != 200 {
+		log.Printf("[error] get version failed")
 		return nil
 	}
 
@@ -286,13 +287,16 @@ func releaseAgent() {
 	if curVd != nil {
 		vOld := strings.Split(curVd.Version, `-`)
 		vCur := strings.Split(git.Version, `-`)
-		if vOld[0] == vCur[0] && vOld[1] == vCur[1] && vOld[2] == vCur[2] {
+		if vOld[0] == vCur[0] &&
+			vOld[1] == vCur[1] &&
+			vOld[2] == vCur[2] &&
+			vOld[3] == vCur[3] {
 			log.Printf("[warn] Current OSS corsair verison is the newest (%s <=> %s). Exit now.", curVd.Version, git.Version)
 			os.Exit(0)
 		}
 
 		installObj := path.Join(objPath, "install.sh")
-		installObjOld := path.Join(objPath, fmt.Sprintf("install-%s-%s.sh", vOld[0], vOld[1]))
+		installObjOld := path.Join(objPath, fmt.Sprintf("install-%s.sh", curVd.Version))
 
 		oc.Move(installObj, installObjOld)
 	}
@@ -430,7 +434,7 @@ const (
 			Port:         *flagPort,
 		}
 
-		log.Printf("[debug] %+#v", install)
+		// log.Printf("[debug] %+#v", install)
 
 		txt, err := ioutil.ReadFile("install.template")
 		if err != nil {

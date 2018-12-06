@@ -4,7 +4,7 @@ default: local
 
 # devops 测试环境
 TEST_KODO_HOST = testing.kodo.cloudcare.cn
-TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/testing
+TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/test
 TEST_SSL = 0
 TEST_PORT = 80
 
@@ -35,7 +35,7 @@ RELEASE_PORT = 443
 PUB_DIR = pub
 BIN = corsair
 NAME = corsair
-ENTRY = node_exporter.go
+ENTRY = main.go
 
 VERSION := $(shell git describe --always --tags)
 

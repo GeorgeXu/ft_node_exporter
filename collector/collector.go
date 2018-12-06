@@ -21,7 +21,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/log"
-	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 // Namespace defines the common namespace to be used by all metrics.
@@ -40,6 +39,8 @@ var (
 		[]string{"collector"},
 		nil,
 	)
+
+	EnableAll = false
 )
 
 const (
@@ -49,27 +50,31 @@ const (
 
 var (
 	factories      = make(map[string]func() (Collector, error))
-	collectorState = make(map[string]*bool)
+	collectorState = make(map[string]bool)
 )
 
-func registerCollector(collector string, isDefaultEnabled bool, factory func() (Collector, error)) {
-	var helpDefaultState string
-	if isDefaultEnabled {
-		helpDefaultState = "enabled"
-	} else {
-		helpDefaultState = "disabled"
+func ListAllCollectors() map[string]bool {
+	return collectorState
+}
+
+func SetCollector(collector string, isEnabled bool) {
+	if _, ok := collectorState[collector]; !ok {
+		// do nothing
+		return
 	}
 
-	flagName := fmt.Sprintf("collector.%s", collector)
-	flagHelp := fmt.Sprintf("Enable the %s collector (default: %s).", collector, helpDefaultState)
-	defaultValue := fmt.Sprintf("%v", isDefaultEnabled)
+	collectorState[collector] = isEnabled
+}
 
-	flag := kingpin.Flag(flagName, flagHelp).Default(defaultValue).Bool()
-	collectorState[collector] = flag
+func registerCollector(collector string, isDefaultEnabled bool, factory func() (Collector, error)) {
+
+	if EnableAll {
+		isDefaultEnabled = true
+	}
+
+	collectorState[collector] = isDefaultEnabled
 
 	factories[collector] = factory
-
-	// log.Infof("regist %s collector: %s", collector, helpDefaultState)
 }
 
 // NodeCollector implements the prometheus.Collector interface.
@@ -85,7 +90,7 @@ func NewNodeCollector(filters ...string) (*NodeCollector, error) {
 		if !exist {
 			return nil, fmt.Errorf("missing collector: %s", filter)
 		}
-		if !*enabled {
+		if !enabled {
 			return nil, fmt.Errorf("disabled collector: %s", filter)
 		}
 		f[filter] = true
@@ -93,7 +98,7 @@ func NewNodeCollector(filters ...string) (*NodeCollector, error) {
 
 	collectors := make(map[string]Collector)
 	for key, enabled := range collectorState {
-		if *enabled {
+		if enabled {
 			collector, err := factories[key]() // call NewxxxCollector()
 			if err != nil {
 				continue
