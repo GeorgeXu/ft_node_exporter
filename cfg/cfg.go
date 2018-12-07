@@ -21,11 +21,11 @@ type Config struct {
 	SK             string          `yaml:"sk"`
 	Port           int             `yaml:"port"`
 	Collectors     map[string]bool `yaml:"collectors"`
-	SingleMode     bool            `yaml:"single_mode"`
+	SingleMode     int             `yaml:"single_mode"`
 	Host           string          `yaml:"host"`
 	ScrapeInterval int             `yaml:"scrap_interval"`
 	RemoteHost     string          `yaml:"remote_host"`
-	EnableAll      bool            `yaml:"enable_all"`
+	EnableAll      int             `yaml:"enable_all"`
 }
 
 var (
@@ -141,7 +141,9 @@ func initPromCfg(c *Config) error {
 		cloudcare.CorsairInstanceID = c.InstanceID
 	}
 
-	collector.EnableAll = c.EnableAll
+	if c.EnableAll == 1 {
+		collector.EnableAll = true
+	}
 
 	for k, v := range c.Collectors {
 		collector.SetCollector(k, v)

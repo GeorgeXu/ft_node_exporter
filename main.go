@@ -42,7 +42,7 @@ var (
 		"Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).",
 	).Bool()
 
-	flagSingleMode          = kingpin.Flag("single-mode", "run as single node").Bool()
+	flagSingleMode          = kingpin.Flag("single-mode", "run as single node").Default("0").Int()
 	flagInit                = kingpin.Flag("init", `init collector`).Bool()
 	flagUpgrade             = kingpin.Flag("upgrade", ``).Bool()
 	flagHost                = kingpin.Flag("host", `eg. ip addr`).String()
@@ -55,7 +55,7 @@ var (
 	flagPort                = kingpin.Flag("port", `web listen port`).Default("9100").Int()
 	flagCfgFile             = kingpin.Flag("cfg", `configure file`).Default("cfg.yml").String()
 	flagVersionInfo         = kingpin.Flag("version", "show version info").Bool()
-	flagEnableAllCollectors = kingpin.Flag("enable-all-collectors", "enable all collectors").Default("false").Bool()
+	flagEnableAllCollectors = kingpin.Flag("enable-all", "enable all collectors").Default("0").Int()
 )
 
 // handler wraps an unfiltered http.Handler but uses a filtered handler,
@@ -159,9 +159,7 @@ func (h *handler) innerHandler(filters ...string) (http.Handler, error) {
 }
 
 func initCfg() error {
-	if *flagSingleMode {
-		cfg.Cfg.SingleMode = true
-	}
+	cfg.Cfg.SingleMode = *flagSingleMode
 
 	if *flagHost != "" {
 		cfg.Cfg.Host = *flagHost
@@ -227,7 +225,7 @@ Golang Version: %s
 		cfg.LoadConfig(*flagCfgFile)
 	}
 
-	if cfg.Cfg.SingleMode {
+	if cfg.Cfg.SingleMode == 1 {
 		var scu *url.URL
 
 		if err := cloudcare.Start(cfg.Cfg.RemoteHost, ""); err != nil {
