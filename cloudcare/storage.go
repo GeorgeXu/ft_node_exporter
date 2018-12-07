@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/pkg/labels"
-	//"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/storage"
 )
 
@@ -58,8 +57,6 @@ func (s *Storage) ApplyConfig(conf *config.Config) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	//remoteCfgs := conf.RemoteWriteConfigs
-
 	newQueues := []*QueueManager{}
 
 	rwCfg := config.DefaultRemoteWriteConfig
@@ -86,29 +83,6 @@ func (s *Storage) ApplyConfig(conf *config.Config) error {
 		c,
 		s.flushDeadline,
 	))
-
-	// for i, rwCfg := range remoteCfgs {
-
-	// 	clientCfg := &ClientConfig{
-	// 		URL:              rwCfg.URL,
-	// 		Timeout:          rwCfg.RemoteTimeout,
-	// 		HTTPClientConfig: rwCfg.HTTPClientConfig,
-	// 	}
-
-	// 	c, err := NewClient(i, s.logger, clientCfg)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	newQueues = append(newQueues, newQueueManager(
-	// 		s.logger,
-	// 		rwCfg.QueueConfig,
-	// 		conf.GlobalConfig.ExternalLabels,
-	// 		rwCfg.WriteRelabelConfigs,
-	// 		c,
-	// 		s.flushDeadline,
-	// 	))
-	// }
 
 	for _, q := range s.queues {
 		q.Stop()

@@ -1,146 +1,97 @@
-# Copyright 2015 The Prometheus Authors
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+.PHONY: default
 
-include Makefile.common
+default: local
 
-GO     ?= GO15VENDOREXPERIMENT=1 go
-GOARCH := $(shell $(GO) env GOARCH)
-GOHOSTARCH := $(shell $(GO) env GOHOSTARCH)
+# devops 测试环境
+TEST_KODO_HOST = testing.kodo.cloudcare.cn
+TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/test
+TEST_SSL = 0
+TEST_PORT = 80
 
-PROMTOOL    ?= $(FIRST_GOPATH)/bin/promtool
+# devops 预发环境
+PREPROD_KODO_HOST = preprod-kodo.cloudcare.cn
+PREPROD_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/preprod
+PREPROD_SSL = 1
+PREPROD_PORT = 443
 
-DOCKER_IMAGE_NAME       ?= node-exporter
-MACH                    ?= $(shell uname -m)
-DOCKERFILE              ?= Dockerfile
+# alpha 环境
+ALPHA_KODO_HOST = kodo-alpha.cloudcare.cn
+ALPHA_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/alpha
+ALPHA_SSL = 1
+ALPHA_PORT = 443
 
-STATICCHECK_IGNORE =
+# 本地搭建的 kodo 测试(XXX: 自行绑定下这个域名到某个地址)
+LOCAL_KODO_HOST = kodo-local.cloudcare.cn
+LOCAL_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/local
+LOCAL_SSL = 0
+LOCAL_PORT = 80
 
-ifeq ($(OS),Windows_NT)
-	OS_detected := Windows
-else
-	OS_detected := $(shell uname -s)
-endif
+# 正式环境
+RELEASE_KODO_HOST = kodo.cloudcare.cn
+RELEASE_DOWNLOAD_ADDR = diaobaoyun-agent.oss-cn-hangzhou.aliyuncs.com/corsair/release
+RELEASE_SSL = 1
+RELEASE_PORT = 443
 
-ifeq ($(GOHOSTARCH),amd64)
-	ifeq ($(OS_detected),$(filter $(OS_detected),Linux FreeBSD Darwin Windows))
-		# Only supported on amd64
-		test-flags := -race
-	endif
-endif
+PUB_DIR = pub
+BIN = corsair
+NAME = corsair
+ENTRY = main.go
 
-ifeq ($(OS_detected), Linux)
-	test-e2e := test-e2e
-else
-	test-e2e := skip-test-e2e
-endif
+VERSION := $(shell git describe --always --tags)
 
-# Use CGO for non-Linux builds.
-ifeq ($(GOOS), linux)
-	PROMU_CONF ?= .promu.yml
-else
-	ifndef GOOS
-		ifeq ($(OS_detected), Linux)
-			PROMU_CONF ?= .promu.yml
-		else
-			PROMU_CONF ?= .promu-cgo.yml
-		endif
-	else
-		PROMU_CONF ?= .promu-cgo.yml
-	endif
-endif
+all: test release preprod local alpha
 
-PROMU := $(FIRST_GOPATH)/bin/promu --config $(PROMU_CONF)
+local:
+	@echo "===== $(BIN) local ===="
+	@rm -rf $(PUB_DIR)/local
+	@mkdir -p build $(PUB_DIR)/local
+	@mkdir -p git
+	@echo 'package git; const (Sha1 string=""; BuildAt string=""; Version string=""; Golang string="")' > git/git.go
+	@go run make.go -main $(ENTRY) -binary $(BIN) -name $(NAME) -build-dir build -archs "linux/amd64" -cgo \
+		-kodo-host $(LOCAL_KODO_HOST) -download-addr $(LOCAL_DOWNLOAD_ADDR) -ssl $(LOCAL_SSL) -port $(LOCAL_PORT) \
+		-release local -pub-dir $(PUB_DIR)
+	@strip build/$(NAME)-linux-amd64/$(BIN)
+	@tar czf $(PUB_DIR)/local/$(NAME)-$(VERSION).tar.gz -C build .
+	tree -Csh $(PUB_DIR)
 
-e2e-out = collector/fixtures/e2e-output.txt
-ifeq ($(MACH), ppc64le)
-	e2e-out = collector/fixtures/e2e-64k-page-output.txt
-endif
-ifeq ($(MACH), aarch64)
-	e2e-out = collector/fixtures/e2e-64k-page-output.txt
-endif
+release:
+	@echo "===== $(BIN) release ===="
+	@rm -rf $(PUB_DIR)/release
+	@mkdir -p build $(PUB_DIR)/release
+	@mkdir -p git
+	@echo 'package git; const (Sha1 string=""; BuildAt string=""; Version string=""; Golang string="")' > git/git.go
+	@go run make.go -main $(ENTRY) -binary $(BIN) -name $(NAME) -build-dir build -archs "linux/amd64" -cgo \
+		-kodo-host $(RELEASE_KODO_HOST) -download-addr $(RELEASE_DOWNLOAD_ADDR) -ssl $(RELEASE_SSL) -port $(RELEASE_PORT) \
+		-release release -pub-dir $(PUB_DIR)
+	@strip build/$(NAME)-linux-amd64/$(BIN)
+	@tar czf $(PUB_DIR)/release/$(NAME)-$(VERSION).tar.gz -C build .
+	tree -Csh $(PUB_DIR)
 
-# 64bit -> 32bit mapping for cross-checking. At least for amd64/386, the 64bit CPU can execute 32bit code but not the other way around, so we don't support cross-testing upwards.
-cross-test = skip-test-32bit
-define goarch_pair
-	ifeq ($$(OS_detected),Linux)
-		ifeq ($$(GOARCH),$1)
-			GOARCH_CROSS = $2
-			cross-test = test-32bit
-		endif
-	endif
-endef
+test:
+	@echo "===== agent test ===="
+	@rm -rf $(PUB_DIR)/test
+	@mkdir -p build $(PUB_DIR)/test
+	@mkdir -p git
+	@echo 'package git; const (Sha1 string=""; BuildAt string=""; Version string=""; Golang string="")' > git/git.go
+	@go run make.go -main $(ENTRY) -binary $(BIN) -name $(NAME) -build-dir build -archs "linux/amd64" -cgo \
+		-kodo-host $(TEST_KODO_HOST) -download-addr $(TEST_DOWNLOAD_ADDR) -ssl $(TEST_SSL) -port $(TEST_PORT) \
+		-release test -pub-dir $(PUB_DIR)
+	@strip build/$(NAME)-linux-amd64/$(BIN)
+	@tar czf $(PUB_DIR)/test/$(NAME)-$(VERSION).tar.gz -C build .
+	tree -Csh $(PUB_DIR)
 
-# By default, "cross" test with ourselves to cover unknown pairings.
-$(eval $(call goarch_pair,amd64,386))
-$(eval $(call goarch_pair,mips64,mips))
-$(eval $(call goarch_pair,mips64el,mipsel))
+pub_local:
+	@echo "publish local agent ..."
+	@go run make.go -pub -release local -pub-dir $(PUB_DIR) -name $(NAME)
 
-#all: style vet staticcheck checkmetrics checkrules build test $(cross-test) $(test-e2e)
+pub_test:
+	@echo "publish test agent ..."
+	@go run make.go -pub -release test -pub-dir $(PUB_DIR) -name $(NAME)
 
-#all: build
+pub_release:
+	@echo "publish release agent ..."
+	@go run make.go -pub -release release -pub-dir $(PUB_DIR) -name $(NAME)
 
-.PHONY: test
-test: collector/fixtures/sys/.unpacked
-	@echo ">> running tests"
-	$(GO) test -short $(test-flags) $(pkgs)
-
-.PHONY: test-32bit
-test-32bit: collector/fixtures/sys/.unpacked
-	@echo ">> running tests in 32-bit mode"
-	@env GOARCH=$(GOARCH_CROSS) $(GO) test $(pkgs)
-
-.PHONY: skip-test-32bit
-skip-test-32bit:
-	@echo ">> SKIP running tests in 32-bit mode: not supported on $(OS_detected)/$(GOARCH)"
-
-collector/fixtures/sys/.unpacked: collector/fixtures/sys.ttar
-	@echo ">> extracting sysfs fixtures"
-	if [ -d collector/fixtures/sys ] ; then rm -r collector/fixtures/sys ; fi
-	./ttar -C collector/fixtures -x -f collector/fixtures/sys.ttar
-	touch $@
-
-.PHONY: test-e2e
-test-e2e: build collector/fixtures/sys/.unpacked
-	@echo ">> running end-to-end tests"
-	./end-to-end-test.sh
-
-.PHONY: skip-test-e2e
-skip-test-e2e:
-	@echo ">> SKIP running end-to-end tests on $(OS_detected)"
-
-.PHONY: checkmetrics
-checkmetrics: $(PROMTOOL)
-	@echo ">> checking metrics for correctness"
-	./checkmetrics.sh $(PROMTOOL) $(e2e-out)
-
-.PHONY: checkrules
-checkrules: $(PROMTOOL)
-	@echo ">> checking rules for correctness"
-	find . -name "*rules*.yml" | xargs -I {} $(PROMTOOL) check rules {}
-
-.PHONY: docker
-docker:
-ifeq ($(MACH), ppc64le)
-	$(eval DOCKERFILE=Dockerfile.ppc64le)
-endif
-	@echo ">> building docker image from $(DOCKERFILE)"
-	@docker build --file $(DOCKERFILE) -t "$(DOCKER_REPO)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)" .
-
-.PHONY: test-docker
-test-docker:
-	@echo ">> testing docker image"
-	./test_image.sh "$(DOCKER_REPO)/$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)" 9100
-
-.PHONY: promtool $(FIRST_GOPATH)/bin/promtool
-$(FIRST_GOPATH)/bin/promtool promtool:
-	@GOOS= GOARCH= $(GO) get -u github.com/prometheus/prometheus/cmd/promtool
+clean:
+	rm -rf build/*
+	rm -rf $(PUB_DIR)/*

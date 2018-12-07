@@ -1,0 +1,240 @@
+#!/bin/bash
+# auth: tanb
+# date: Wed Dec  5 15:16:01 CST 2018
+
+# 下载地址
+dl_url="http://{{.DownloadAddr}}/{{.Name}}-{{.Version}}.tar.gz"
+
+kodo_host={{.KodoHost}}
+
+bin_name="corsair"
+service_name="corsair"
+
+# 安装目录设置
+install_dir=/usr/local/cloudcare
+pid_file="${install_dir}"/"${bin_name}".pid
+yml_cfg="${install_dir}"/cfg.yml
+binary="${install_dir}"/"${bin_name}"
+log="${install_dir}"/log
+install_log="${install_dir}"/install.log
+
+# 创建安装目录
+if ! mkdir -p "${install_dir}"; then
+  exit -1
+fi
+
+printf "===================================\n" | tee -a $install_log
+echo "Date: `date`" | tee -a $install_log
+printf "===================================\n" | tee -a $install_log
+
+printf "current newest version: %s\n" "{{.Version}}" | tee -a $install_log
+
+# 检测磁盘空间
+required_size=5000000 #KB in 1000
+cur_size=`df | grep '\/$' | awk '{print $4}'`
+
+printf "detecting disk space(%dGB required)... " $((${required_size} / 1000 / 1000)) | tee -a $install_log
+
+if [  ${cur_size}  -lt ${required_size} ]; then
+	printf 'disk size less than %dGB(required), exited now!\n' $((${required_size} / 1000 / 1000)) | tee -a $install_log
+	exit
+else
+	printf 'ok.\n' | tee -a $install_log
+fi
+
+upgrade_flag=0
+within_docker=0
+single_mode=0
+enable_all=0
+corsair_hostname="default"
+corsair_port=9100
+
+while [[ $# > 1 ]]
+do
+  opt="$1"
+
+  case $opt in
+
+    --unique-id)
+      unique_id="$2"
+      shift
+      ;;
+
+    --instance-id)
+      instance_id="$2"
+      shift
+      ;;
+
+    --ak)
+      ak="$2"
+      shift
+      ;;
+
+    --sk)
+      sk="$2"
+      shift
+      ;;
+
+    --single-mode)
+      single_mode=1
+      shift
+      ;;
+
+    --enable-all)
+      enable_all=1
+      shift
+      ;;
+
+
+    --log)
+      log="$2"
+      shift
+      ;;
+
+    --remote-host)
+      remote_host="$2"
+      shift
+      ;;
+
+    --self-host)
+      corsair_hostname="$2"
+      shift
+      ;;
+
+    --corsair-port)
+      corsair_port="$2"
+      shift
+      ;;
+
+    --upgrade)
+      upgrade_flag="$2"
+      shift
+      ;;
+
+		--docker)
+			within_docker="$2"
+			shift
+			;;
+    *)
+      # unknown option
+    ;;
+  esac
+  shift
+done
+
+########################################################
+# 检查这些命令是否支持
+########################################################
+commands=(
+netstat
+wget
+tar
+)
+
+for c in "${commands[@]}"; do
+  if ! hash $c; then
+    printf "$c not found, exit.\n" $c | tee -a $install_log
+    exit -1
+  fi
+done
+
+
+########################################################
+# 停止当前正在运行的 corsair
+########################################################
+services=(
+"${service_name}"
+)
+
+for s in "${services[@]}"; do
+  printf "stopping %s... " ${s} | tee -a $install_log
+	ps -ef | pgrep ${s} | xargs kill &> /dev/null
+done
+
+########################################################
+# 检查这些端口是否被占用
+########################################################
+
+corsair_ports=(
+$corsair_port
+)
+
+for ap in "${corsair_ports[@]}"; do
+  if netstat -tunple | grep -w $ap; then
+    printf "port %s been using...\n" $ap | tee -a $install_log
+    exit -1
+  fi
+done
+
+########################################################
+# 下载最新 corsair 并安装到指定目录
+########################################################
+
+printf 'downloading new corsair... ' | tee -a ${install_log}
+wget -O - "${dl_url}" | tar -xz -C ${install_dir}
+if [ $? -ne 0 ]; then
+  printf 'failed\n' | tee -a ${install_log}
+  exit 1
+else
+  printf 'ok\n' | tee -a ${install_log}
+fi
+
+# 根据系统平台选择不同的 corsair 程序
+arch=`uname -m`
+if [ "${arch}" = "x86_64" ]; then
+  echo 'install on platform x86_64...' | tee -a $install_log
+  mv "${install_dir}"/{{.Name}}-linux-amd64/{{.Name}} "${install_dir}"/
+else
+  echo 'i386 not support, exit now!' | tee -a $install_log
+  exit -1
+fi
+
+########################################################
+# init corsair settings
+########################################################
+
+if [ $upgrade_flag -eq 0 ]; then
+  printf "init corsair ... " | tee -a ${install_log}
+	echo ${binary} --init --unique-id "${unique_id}" --instance-id "${instance_id}" --ak "${ak}" --sk "${sk}" --single-mode ${single_mode} --enable-all ${enable_all} --cfg "${yml_cfg}" --remote-host "${remote_host}" --host "${corsair_hostname}" --port "${corsair_port}" | tee -a ${install_log} | tee -a ${install_log}
+  if ${binary} --init \
+		--unique-id "${unique_id}" \
+		--instance-id "${instance_id}" \
+		--ak "${ak}" \
+		--sk "${sk}" \
+		--single-mode ${single_mode} \
+		--enable-all ${enable_all} \
+    --cfg "${yml_cfg}" \
+    --remote-host "${remote_host}" \
+    --host "${corsair_hostname}" \
+		--port "${corsair_port}" ; then
+
+    printf "ok\n" | tee -a ${install_log}
+  else
+    printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
+		echo ${binary} --init --unique-id "${unique_id}" --instance-id "${instance_id}" --ak "${ak}" --sk "${sk}" --single-mode "${single_mode}" --cfg "${yml_cfg}" --remote-host "${remote_host}" --host "${corsair_hostname}" --port "${corsair_port}" | tee -a ${install_log} | tee -a ${install_log}
+    exit 1
+  fi
+else
+	printf "new corsair download ok\n" | tee -a ${install_log}
+fi
+
+########################################################
+# start corsair and set to backend
+# 经测试(Sat Nov 11 11:04:22 CST 2017):
+#   centos 6.8 是 old upstart 启动的
+#   centos 6.9 是 old upstart 启动的
+#    通过 status corsair 查看 corsair 运行状态
+#   centos 7.2 是 systemd 启动的
+#   centos 7.3 是 systemd 启动的
+#    通过 systemctl status corsair 查看运行状况
+#   ubuntu 14.04/16.04 是 new upstart 启动
+#   debian 8.9 是通过 systemd 启动的
+#   opensuse 13.1 是通过 systemd 启动的
+#
+########################################################
+printf "starting corsair ...\n" | tee -a ${install_log}
+
+# 直接后台运行 corsair
+(${binary} --cfg "${yml_cfg}" &> ${install_dir}/log &)
+
+printf "Success!\n" | tee -a ${install_log}
