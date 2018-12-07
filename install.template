@@ -71,8 +71,8 @@ do
       shift
       ;;
 
-    --singleton)
-      singleton=1
+    --single-mode)
+      single_mode=1
       shift
       ;;
 
@@ -81,8 +81,8 @@ do
       shift
       ;;
 
-    --center-host)
-      kodo_host="$2"
+    --remote-host)
+      remote_host="$2"
       shift
       ;;
 
@@ -203,9 +203,9 @@ if [ $upgrade_flag -eq 0 ]; then
 		--instance-id "${instance_id}" \
 		--ak "${ak}" \
 		--sk "${sk}" \
-		--singleton ${singleton} \
+		--single-mode ${single_mode} \
     --cfg "${yaml_cfg}" \
-    --remotehost "${kodo_host}" \
+    --remote-host "${remote_host}" \
     --host "${corsair_hostname}" \
 		--port "${corsair_port}" ; then
 
