@@ -39,8 +39,6 @@ var (
 		[]string{"collector"},
 		nil,
 	)
-
-	EnableAll = false
 )
 
 const (
@@ -67,10 +65,6 @@ func SetCollector(collector string, isEnabled bool) {
 }
 
 func registerCollector(collector string, isDefaultEnabled bool, factory func() (Collector, error)) {
-
-	if EnableAll {
-		isDefaultEnabled = true
-	}
 
 	collectorState[collector] = isDefaultEnabled
 

@@ -142,11 +142,15 @@ func initPromCfg(c *Config) error {
 	}
 
 	if c.EnableAll == 1 {
-		collector.EnableAll = true
-	}
-
-	for k, v := range c.Collectors {
-		collector.SetCollector(k, v)
+		// 开启所有收集器
+		for k, _ := range c.Collectors {
+			collector.SetCollector(k, true)
+		}
+	} else {
+		// 将配置中的开关设置到 collector 模块中
+		for k, v := range c.Collectors {
+			collector.SetCollector(k, v)
+		}
 	}
 
 	cloudcare.PromCfg.GlobalConfig.ScrapeInterval =

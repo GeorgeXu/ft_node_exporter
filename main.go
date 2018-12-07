@@ -198,6 +198,12 @@ func initCfg() error {
 
 	cfg.Cfg.Collectors = collector.ListAllCollectors()
 
+	if cfg.Cfg.EnableAll == 1 {
+		for k, _ := range cfg.Cfg.Collectors {
+			cfg.Cfg.Collectors[k] = true
+		}
+	}
+
 	return cfg.DumpConfig(*flagCfgFile)
 }
 
@@ -221,9 +227,11 @@ Golang Version: %s
 		return
 	} else if *flagUpgrade {
 		// TODO
-	} else {
-		cfg.LoadConfig(*flagCfgFile)
+		return
 	}
+
+	cfg.LoadConfig(*flagCfgFile)
+	cfg.DumpConfig(*flagCfgFile) // load 过程中可能会修改 cfg.Cfg, 需重新写入
 
 	if cfg.Cfg.SingleMode == 1 {
 		var scu *url.URL
