@@ -18,9 +18,6 @@ import (
 
 // String constants for instrumentation.
 const (
-	namespace = "prometheus"
-	subsystem = "remote_storage"
-	queue     = "queue"
 
 	// We track samples in/out and how long pushes take using an Exponentially
 	// Weighted Moving Average.
@@ -354,7 +351,7 @@ func (s *shards) enqueue(sample *model.Sample) bool {
 }
 
 func addTags(s *model.Sample) {
-	s.Metric[model.LabelName(`instance_id`)] = model.LabelValue(CorsairInstanceID)
+	s.Metric[model.LabelName(`cloud_asset_id`)] = model.LabelValue(CorsairCloudAssetID)
 	s.Metric[model.LabelName(`host`)] = model.LabelValue(CorsairHost)
 }
 

@@ -15,8 +15,8 @@ import (
 )
 
 type Config struct {
-	UniqueID       string          `yaml:"unique_id"`
-	InstanceID     string          `yaml:"instance_id"`
+	TeamID         string          `yaml:"team_id"`
+	CloudAssetID   string          `yaml:"cloud_asset_id"`
 	AK             string          `yaml:"ak"`
 	SK             string          `yaml:"sk"`
 	Port           int             `yaml:"port"`
@@ -125,8 +125,8 @@ func initPromCfg(c *Config) error {
 	if c.Host != "" {
 		cloudcare.CorsairHost = c.Host
 	}
-	if c.UniqueID != "" {
-		cloudcare.CorsairUniqueID = c.UniqueID
+	if c.TeamID != "" {
+		cloudcare.CorsairTeamID = c.TeamID
 	}
 	if c.AK != "" {
 		cloudcare.CorsairAK = c.AK
@@ -137,8 +137,8 @@ func initPromCfg(c *Config) error {
 
 	cloudcare.CorsairPort = c.Port
 
-	if c.InstanceID != "" {
-		cloudcare.CorsairInstanceID = c.InstanceID
+	if c.CloudAssetID != "" {
+		cloudcare.CorsairCloudAssetID = c.CloudAssetID
 	}
 
 	if c.EnableAll == 1 {

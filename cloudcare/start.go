@@ -17,12 +17,12 @@ var (
 	PromCfg        config.Config
 	chStop         chan struct{}
 
-	CorsairInstanceID     string
-	CorsairUniqueID       string
-	CorsairHost           string
-	CorsairPort           int
+	CorsairCloudAssetID   string
+	CorsairTeamID         string
 	CorsairSK             string
 	CorsairAK             string
+	CorsairHost           string
+	CorsairPort           int
 	CorsairScrapeInterval int
 )
 

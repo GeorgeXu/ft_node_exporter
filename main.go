@@ -48,8 +48,8 @@ var (
 	flagHost                = kingpin.Flag("host", `eg. ip addr`).String()
 	flagRemoteHost          = kingpin.Flag("remote-host", `data bridge addr`).Default("http://kodo.cloudcare.com/v1/write").String()
 	flagScrapeInterval      = kingpin.Flag("scrape-interval", "frequency to upload data").Default("15").Int()
-	flagUniqueID            = kingpin.Flag("unique-id", "User ID").String()
-	flagInstanceID          = kingpin.Flag("instance-id", "instance ID").String()
+	flagTeamID              = kingpin.Flag("team-id", "User ID").String()
+	flagCloudAssetID        = kingpin.Flag("cloud-asset-id", "cloud instance ID").String()
 	flagAK                  = kingpin.Flag("ak", `Access Key`).String()
 	flagSK                  = kingpin.Flag("sk", `Secret Key`).String()
 	flagPort                = kingpin.Flag("port", `web listen port`).Default("9100").Int()
@@ -170,16 +170,16 @@ func initCfg() error {
 	cfg.Cfg.EnableAll = *flagEnableAllCollectors
 
 	// unique-id 为必填参数
-	if *flagUniqueID == "" {
+	if *flagTeamID == "" {
 		log.Fatal("invalid unique-id")
 	} else {
-		cfg.Cfg.UniqueID = *flagUniqueID
+		cfg.Cfg.TeamID = *flagTeamID
 	}
 
-	if *flagInstanceID == "" {
-		log.Fatal("invalid instance-id")
+	if *flagCloudAssetID == "" {
+		log.Fatal("invalid cloud assert id")
 	} else {
-		cfg.Cfg.InstanceID = *flagInstanceID
+		cfg.Cfg.CloudAssetID = *flagCloudAssetID
 	}
 
 	if *flagAK == "" {

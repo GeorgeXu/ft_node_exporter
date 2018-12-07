@@ -86,8 +86,8 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
 	for _, t := range req.Timeseries {
 		t.Labels = append(t.Labels, &prompb.Label{
-			Name:  "instance_id",
-			Value: CorsairInstanceID,
+			Name:  "cloud_asset_id",
+			Value: CorsairCloudAssetID,
 		})
 		if CorsairHost != "" {
 			t.Labels = append(t.Labels, &prompb.Label{
@@ -120,12 +120,12 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	date := time.Now().UTC().Format(http.TimeFormat)
 
 	sig := generateAuthorization(compressed, contentType,
-		date, CorsairUniqueID, http.MethodPost, CorsairSK)
+		date, CorsairTeamID, http.MethodPost, CorsairSK)
 
 	httpReq.Header.Add("Content-Encoding", contentEncode)
 	httpReq.Header.Set("Content-Type", contentType)
 	httpReq.Header.Set("X-Corsair-Version", git.Version)
-	httpReq.Header.Set("X-Corsair-Key", CorsairUniqueID)
+	httpReq.Header.Set("X-Team-ID", CorsairTeamID)
 	httpReq.Header.Set("Date", date)
 	httpReq.Header.Set("Authorization", "node "+CorsairAK+":"+sig)
 	httpReq = httpReq.WithContext(ctx)
