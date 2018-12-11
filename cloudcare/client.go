@@ -102,7 +102,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 		return err
 	}
 
-	level.Info(c.logger).Log("msg", "----send", len(data), len(data))
+	level.Debug(c.logger).Log("msg", "----send", len(data), data)
 
 	compressed := snappy.Encode(nil, data)
 	httpReq, err := http.NewRequest("POST", c.url.String(), bytes.NewReader(compressed))
@@ -124,12 +124,12 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
 	httpReq.Header.Add("Content-Encoding", contentEncode)
 	httpReq.Header.Set("Content-Type", contentType)
-	httpReq.Header.Set("X-Corsair-Version", git.Version)
+	httpReq.Header.Set("X-Version", "corsair "+git.Version)
 	httpReq.Header.Set("X-Team-ID", CorsairTeamID)
 	httpReq.Header.Set("X-Cloud-Asset-ID", CorsairCloudAssetID)
 	httpReq.Header.Set("X-Cloud-Asset-IP", CorsairHost)
 	httpReq.Header.Set("Date", date)
-	httpReq.Header.Set("Authorization", "node "+CorsairAK+":"+sig)
+	httpReq.Header.Set("Authorization", "corsair "+CorsairAK+":"+sig)
 	httpReq = httpReq.WithContext(ctx)
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)

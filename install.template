@@ -5,8 +5,7 @@
 # 下载地址
 dl_url="http://{{.DownloadAddr}}/{{.Name}}-{{.Version}}.tar.gz"
 
-kodo_host={{.KodoHost}}
-
+remote_host={{.KodoHost}}
 bin_name="corsair"
 service_name="corsair"
 
