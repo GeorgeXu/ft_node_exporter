@@ -21,7 +21,7 @@ var (
 	CorsairTeamID         string
 	CorsairSK             string
 	CorsairAK             string
-	CorsairHost           string
+	CorsairHost           string = `default`
 	CorsairPort           int
 	CorsairScrapeInterval int
 )

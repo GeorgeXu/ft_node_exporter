@@ -227,7 +227,7 @@ func getCurrentVersionInfo(url string) *versionDesc {
 	}
 
 	if resp.StatusCode != 200 {
-		log.Printf("[error] get version failed")
+		log.Printf("[warn] get current online version failed, ignored")
 		return nil
 	}
 
@@ -246,22 +246,20 @@ func getCurrentVersionInfo(url string) *versionDesc {
 }
 
 func releaseAgent() {
-	var ak, sk, bucket, objPath, ossHost, prefix string
+	var ak, sk, bucket, ossHost, prefix string
+	objPath := *flagName + "/" + *flagRelease
 
 	// 在你本地设置好这些 oss-key 环境变量
 	switch *flagRelease {
 	case `test`, `local`, `release`, `preprod`, `alpha`:
 		tag := strings.ToUpper(*flagRelease)
-		ak = os.Getenv(tag + "_CORSAIR_AGENT_OSS_ACCESS_KEY")
-		sk = os.Getenv(tag + "_CORSAIR_AGENT_OSS_SECRET_KEY")
-		bucket = os.Getenv(tag + "_CORSAIR_AGENT_OSS_BUCKET")
-		objPath = os.Getenv(tag + "_CORSAIR_AGENT_OSS_PATH")
-		ossHost = os.Getenv(tag + "_CORSAIR_AGENT_OSS_HOST")
+		ak = os.Getenv(tag + "_OSS_ACCESS_KEY")
+		sk = os.Getenv(tag + "_OSS_SECRET_KEY")
+		bucket = os.Getenv(tag + "_OSS_BUCKET")
+		ossHost = os.Getenv(tag + "_OSS_HOST")
 	default:
 		log.Fatalf("unknown release type: %s", *flagRelease)
 	}
-
-	prefix = path.Join(*flagPubDir, *flagRelease)
 
 	if ak == "" || sk == "" {
 		log.Fatal("[fatal] oss access key or secret key missing")
@@ -301,6 +299,7 @@ func releaseAgent() {
 		oc.Move(installObj, installObjOld)
 	}
 
+	prefix = path.Join(*flagPubDir, *flagRelease)
 	gzName := fmt.Sprintf("%s-%s.tar.gz", *flagName, string(curVersion))
 	objs := map[string]string{
 		path.Join(prefix, gzName):       path.Join(objPath, gzName),
