@@ -124,7 +124,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
 	httpReq.Header.Add("Content-Encoding", contentEncode)
 	httpReq.Header.Set("Content-Type", contentType)
-	httpReq.Header.Set("X-Version", "corsair "+git.Version)
+	httpReq.Header.Set("X-Version", "corsair/"+git.Version)
 	httpReq.Header.Set("X-Team-ID", CorsairTeamID)
 	httpReq.Header.Set("X-Cloud-Asset-ID", CorsairCloudAssetID)
 	httpReq.Header.Set("X-Cloud-Asset-IP", CorsairHost)

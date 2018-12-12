@@ -43,9 +43,9 @@ fi
 
 upgrade_flag=0
 within_docker=0
-single_mode=0
-enable_all=0
-corsair_hostname="default"
+single_mode=1
+enable_all=1
+host_ip="default"
 corsair_port=9100
 
 while [[ $# > 1 ]]
@@ -75,15 +75,14 @@ do
       ;;
 
     --single-mode)
-      single_mode=1
+      single_mode="$2"
       shift
       ;;
 
     --enable-all)
-      enable_all=1
+      enable_all="$2"
       shift
       ;;
-
 
     --log)
       log="$2"
@@ -95,8 +94,8 @@ do
       shift
       ;;
 
-    --self-host)
-      corsair_hostname="$2"
+    --host)
+      host_ip="$2"
       shift
       ;;
 
@@ -203,13 +202,13 @@ if [ $upgrade_flag -eq 0 ]; then
 		--enable-all ${enable_all} \
     --cfg "${yml_cfg}" \
     --remote-host "${remote_host}" \
-    --host "${corsair_hostname}" \
+    --host "${host_ip}" \
 		--port "${corsair_port}" ; then
 
     printf "ok\n" | tee -a ${install_log}
   else
     printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
-		echo ${binary} --init --team-id "${team_id}" --cloud-asset-id "${cloud_asset_id}" --ak "${ak}" --sk "${sk}" --single-mode ${single_mode} --enable-all ${enable_all} --cfg "${yml_cfg}" --remote-host "${remote_host}" --host "${corsair_hostname}" --port "${corsair_port}" | tee -a ${install_log} | tee -a ${install_log}
+		echo ${binary} --init --team-id "${team_id}" --cloud-asset-id "${cloud_asset_id}" --ak "${ak}" --sk "${sk}" --single-mode ${single_mode} --enable-all ${enable_all} --cfg "${yml_cfg}" --remote-host "${remote_host}" --host "${host_ip}" --port "${corsair_port}" | tee -a ${install_log} | tee -a ${install_log}
     exit 1
   fi
 else
@@ -228,7 +227,6 @@ fi
 #   ubuntu 14.04/16.04 是 new upstart 启动
 #   debian 8.9 是通过 systemd 启动的
 #   opensuse 13.1 是通过 systemd 启动的
-#
 ########################################################
 printf "starting corsair ...\n" | tee -a ${install_log}
 

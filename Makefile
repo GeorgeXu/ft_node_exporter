@@ -3,31 +3,19 @@
 default: local
 
 # devops 测试环境
-TEST_KODO_HOST = testing.kodo.cloudcare.cn
+TEST_KODO_HOST = http://test-kodo.cloudcare.com:9527/v1/write
 TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/test
 TEST_SSL = 0
 TEST_PORT = 80
 
-# devops 预发环境
-PREPROD_KODO_HOST = preprod-kodo.cloudcare.cn
-PREPROD_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/preprod
-PREPROD_SSL = 1
-PREPROD_PORT = 443
-
-# alpha 环境
-ALPHA_KODO_HOST = kodo-alpha.cloudcare.cn
-ALPHA_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/alpha
-ALPHA_SSL = 1
-ALPHA_PORT = 443
-
 # 本地搭建的 kodo 测试(XXX: 自行绑定下这个域名到某个地址)
-LOCAL_KODO_HOST = kodo-local.cloudcare.cn
+LOCAL_KODO_HOST = http://local-kodo.cloudcare.com:9527/v1/write
 LOCAL_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/local
 LOCAL_SSL = 0
 LOCAL_PORT = 80
 
 # 正式环境
-RELEASE_KODO_HOST = kodo.cloudcare.cn
+RELEASE_KODO_HOST = https://kodo.cloudcare.com/v1/write
 RELEASE_DOWNLOAD_ADDR = diaobaoyun-agent.oss-cn-hangzhou.aliyuncs.com/corsair/release
 RELEASE_SSL = 1
 RELEASE_PORT = 443
