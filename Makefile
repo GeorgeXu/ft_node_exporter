@@ -39,6 +39,7 @@ local:
 		-kodo-host $(LOCAL_KODO_HOST) -download-addr $(LOCAL_DOWNLOAD_ADDR) -ssl $(LOCAL_SSL) -port $(LOCAL_PORT) \
 		-release local -pub-dir $(PUB_DIR)
 	@strip build/$(NAME)-linux-amd64/$(BIN)
+	@cp osqueryd build/$(NAME)-linux-amd64
 	@tar czf $(PUB_DIR)/local/$(NAME)-$(VERSION).tar.gz -C build .
 	tree -Csh $(PUB_DIR)
 

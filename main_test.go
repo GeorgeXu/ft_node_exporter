@@ -135,3 +135,13 @@ func runCommandAndTests(cmd *exec.Cmd, address string, fn func(pid int) error) e
 	}
 	return err
 }
+
+func TestOSQuery(t *testing.T) {
+	cmd := exec.Command("./osqueryi", []string{`--json`, `select * from users`}...)
+	out, err := cmd.Output()
+	if err != nil {
+		t.Errorf("%s", err)
+	} else {
+		fmt.Printf("%s", string(out))
+	}
+}
