@@ -26,13 +26,13 @@ var (
 	CorsairScrapeInterval int
 )
 
-func loop(s *Storage, scrapeurl string) {
+func loop(s *Storage, scrapeurl string, interval int) {
 
 	sp := &scrape{
 		storage: s,
 	}
 
-	ticker := time.NewTicker(time.Duration(PromCfg.GlobalConfig.ScrapeInterval))
+	ticker := time.NewTicker(time.Duration(interval))
 	defer ticker.Stop()
 
 	for {
@@ -65,7 +65,7 @@ func loop(s *Storage, scrapeurl string) {
 	}
 }
 
-func Start(remotehost string, scrapehost string) error {
+func Start(remotehost string, scrapehost string, interval int) error {
 
 	u, err := url.Parse(remotehost)
 	if err != nil {
@@ -90,7 +90,7 @@ func Start(remotehost string, scrapehost string) error {
 
 	go func() {
 		time.Sleep(1 * time.Second)
-		loop(remoteStorage, scrapehost)
+		loop(remoteStorage, scrapehost, interval)
 	}()
 
 	return nil

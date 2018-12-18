@@ -33,6 +33,14 @@
 - 其中 `prometheus.NewDesc()` 这个方法传参数需要注意, 如果是收集到的数据已经 JSON 序列化好了, 则 `variableLabels` 这个参数应该传 `[]string{"json"}`, 否则传 `[]string{"raw"}`, 即收集到的数据是原始格式.  这也暗示着, 中心只接收这两种类型的数据, 而且分别以 `json` 和 `raw` 来区分解析
 - 每个收集器都需要定义一个 `xxxCollector`, 且实现 `Update` 接口
 
+### 验证收集器是否正确
+
+比如验证 sshd 数据是否收集:
+
+	curl -vv http://0.0.0.0:9100/env_infos | grep sshd
+
+即可看到是否有 raw 格式的 sshd 数据返回.
+
 ## osquery 现状
 
 当前 osquery 的支持情况如下

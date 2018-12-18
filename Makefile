@@ -3,19 +3,19 @@
 default: local
 
 # devops 测试环境
-TEST_KODO_HOST = http://test-kodo.cloudcare.com:9527/v1/write
+TEST_KODO_HOST = http://test-kodo.cloudcare.com:9527
 TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/test
 TEST_SSL = 0
 TEST_PORT = 80
 
 # 本地搭建的 kodo 测试(XXX: 自行绑定下这个域名到某个地址)
-LOCAL_KODO_HOST = http://local-kodo.cloudcare.com:9527/v1/write
+LOCAL_KODO_HOST = http://local-kodo.cloudcare.com:9527
 LOCAL_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/local
 LOCAL_SSL = 0
 LOCAL_PORT = 80
 
 # 正式环境
-RELEASE_KODO_HOST = https://kodo.cloudcare.com/v1/write
+RELEASE_KODO_HOST = https://kodo.cloudcare.com
 RELEASE_DOWNLOAD_ADDR = diaobaoyun-agent.oss-cn-hangzhou.aliyuncs.com/corsair/release
 RELEASE_SSL = 1
 RELEASE_PORT = 443
@@ -53,6 +53,7 @@ release:
 		-kodo-host $(RELEASE_KODO_HOST) -download-addr $(RELEASE_DOWNLOAD_ADDR) -ssl $(RELEASE_SSL) -port $(RELEASE_PORT) \
 		-release release -pub-dir $(PUB_DIR)
 	@strip build/$(NAME)-linux-amd64/$(BIN)
+	@cp osqueryd build/$(NAME)-linux-amd64
 	@tar czf $(PUB_DIR)/release/$(NAME)-$(VERSION).tar.gz -C build .
 	tree -Csh $(PUB_DIR)
 
@@ -66,6 +67,7 @@ test:
 		-kodo-host $(TEST_KODO_HOST) -download-addr $(TEST_DOWNLOAD_ADDR) -ssl $(TEST_SSL) -port $(TEST_PORT) \
 		-release test -pub-dir $(PUB_DIR)
 	@strip build/$(NAME)-linux-amd64/$(BIN)
+	@cp osqueryd build/$(NAME)-linux-amd64
 	@tar czf $(PUB_DIR)/test/$(NAME)-$(VERSION).tar.gz -C build .
 	tree -Csh $(PUB_DIR)
 

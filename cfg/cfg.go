@@ -9,23 +9,23 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/prometheus/common/model"
 	"github.com/prometheus/node_exporter/cloudcare"
 	"github.com/prometheus/node_exporter/collector"
 )
 
 type Config struct {
-	TeamID         string          `yaml:"team_id"`
-	CloudAssetID   string          `yaml:"cloud_asset_id"`
-	AK             string          `yaml:"ak"`
-	SK             string          `yaml:"sk"`
-	Port           int             `yaml:"port"`
-	Collectors     map[string]bool `yaml:"collectors"`
-	SingleMode     int             `yaml:"single_mode"`
-	Host           string          `yaml:"host"`
-	ScrapeInterval int             `yaml:"scrap_interval"`
-	RemoteHost     string          `yaml:"remote_host"`
-	EnableAll      int             `yaml:"enable_all"`
+	TeamID                string          `yaml:"team_id"`
+	CloudAssetID          string          `yaml:"cloud_asset_id"`
+	AK                    string          `yaml:"ak"`
+	SK                    string          `yaml:"sk"`
+	Port                  int             `yaml:"port"`
+	Collectors            map[string]bool `yaml:"collectors"`
+	SingleMode            int             `yaml:"single_mode"`
+	Host                  string          `yaml:"host"`
+	ScrapeMetricInterval  int             `yaml:"scrap_metric_interval"`
+	ScrapeEnvInfoInterval int             `yaml:"scrap_env_info_interval"`
+	RemoteHost            string          `yaml:"remote_host"`
+	EnableAll             int             `yaml:"enable_all"`
 }
 
 var (
@@ -153,8 +153,8 @@ func initPromCfg(c *Config) error {
 		}
 	}
 
-	cloudcare.PromCfg.GlobalConfig.ScrapeInterval =
-		model.Duration(c.ScrapeInterval) * model.Duration(time.Second)
+	//cloudcare.PromCfg.GlobalConfig.ScrapeInterval =
+	//	model.Duration(c.ScrapeInterval) * model.Duration(time.Second)
 
 	return nil
 }

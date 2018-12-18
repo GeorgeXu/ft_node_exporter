@@ -22,12 +22,10 @@ const acceptHeader = `application/openmetrics-text; version=0.0.1,text/plain;ver
 
 var userAgentHeader = fmt.Sprintf("Corsair/%s", git.Version)
 
+// @scrapeurl: i.e., http://0.0.0.0:9100/metrics
 func (s *scrape) scrape(w io.Writer, scrapeurl string) (string, error) {
-	url := fmt.Sprintf("http://0.0.0.0:%d/metrics", CorsairPort)
-	if scrapeurl != "" {
-		url = scrapeurl
-	}
-	req, err := http.NewRequest("GET", url, nil)
+
+	req, err := http.NewRequest("GET", scrapeurl, nil)
 	if err != nil {
 		return "", err
 	}
