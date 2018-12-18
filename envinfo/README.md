@@ -32,3 +32,37 @@
 - 每个 xxx.go 中需要有一个 `init()` 函数用于注册收集器
 - 其中 `prometheus.NewDesc()` 这个方法传参数需要注意, 如果是收集到的数据已经 JSON 序列化好了, 则 `variableLabels` 这个参数应该传 `[]string{"json"}`, 否则传 `[]string{"raw"}`, 即收集到的数据是原始格式.  这也暗示着, 中心只接收这两种类型的数据, 而且分别以 `json` 和 `raw` 来区分解析
 - 每个收集器都需要定义一个 `xxxCollector`, 且实现 `Update` 接口
+
+## osquery 现状
+
+当前 osquery 的支持情况如下
+
+| 收集器                                | osquery 对应表   | 是否支持 |
+|---                                    |---                |---       |
+|	用户列表					                    | `users`          | 支持     | 
+|	用户分组列表			                    | `groups`         | 支持     |
+|	主机名和IP配置文件                    | `etc_hosts`      | 支持     |
+|	DNS解析配置文件		                    | `dns_resolvers`  | 支持     |
+|	可执行sudo的用户列表                  | `sudoers`        | 支持     |
+|	内核参数配置                          | `system_controls`| 支持     |
+|	Linux PAM认证下可打开的文件句柄数限制 | `ulimit_info`    | 支持     |
+|	定时任务                              | `crontab`        | 支持     |
+|	远程访问白名单配置                    | N                | 不支持   |
+|	远程访问黑名单配置                    | N                | 不支持   |
+|	有效登陆shell的列表                   | N                | 不支持   |
+|	用户登录后终端显示消息配置            | N                | 不支持   |
+|	用户本地登录前终端显示消息置          | N                | 不支持   |
+|	用户远程登录前终端显示消息配置        | N                | 不支持   |
+|	自启动脚本                            | N                | 不支持   |
+|	不同运行级别自启动脚本                | N                | 不支持   |
+|	当前主机文件系统的相关信息            | N                | 不支持   |
+|	用户环境配置信息                      | N                | 不支持   |
+|	用户bash shell配置信息                | N                | 不支持   |
+|	SELinux(安全增加)配置文件             | N                | 未知     |
+|	系统开启启动配置                      | N                | 不支持   |
+|	主机用户列表(含加密密码)              | N                | 不支持   |
+|	sshd 配置					                    | N                | 不支持   |
+
+## 收集器列表
+
+参见[这里](https://confluence.jiagouyun.com/pages/viewpage.action?pageId=62096517)
