@@ -135,7 +135,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	fmt.Println(c.url.String())
+	// fmt.Println(c.url.String())
 
 	httpResp, err := ctxhttp.Do(ctx, c.client, httpReq)
 	if err != nil {

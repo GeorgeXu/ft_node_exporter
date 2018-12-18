@@ -130,16 +130,16 @@ Golang Version: %s
 
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
-		getURL := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *metricsPath)
-		postURL := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write")
-		if err := cloudcare.Start(postURL, getURL, cfg.Cfg.ScrapeMetricInterval); err != nil {
+		getURLMetric := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *metricsPath)
+		postURLMetric := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write")
+		if err := cloudcare.Start(postURLMetric, getURLMetric, cfg.Cfg.ScrapeMetricInterval); err != nil {
 			panic(err)
 		}
 
 		// env info 收集器
-		getURL = fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *envInfoPath)
-		postURL = fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
-		if err := cloudcare.Start(postURL, getURL, cfg.Cfg.ScrapeEnvInfoInterval); err != nil {
+		getURLEnv := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *envInfoPath)
+		postURLEnv := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
+		if err := cloudcare.Start(postURLEnv, getURLEnv, cfg.Cfg.ScrapeEnvInfoInterval); err != nil {
 			panic(err)
 		}
 

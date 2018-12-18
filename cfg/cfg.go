@@ -153,8 +153,8 @@ func initPromCfg(c *Config) error {
 		}
 	}
 
-	//cloudcare.PromCfg.GlobalConfig.ScrapeInterval =
-	//	model.Duration(c.ScrapeInterval) * model.Duration(time.Second)
+	// cloudcare.PromCfg.GlobalConfig.ScrapeInterval =
+	// 	model.Duration(c.ScrapeMetricInterval) * model.Duration(time.Second)
 
 	return nil
 }

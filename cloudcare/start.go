@@ -3,20 +3,13 @@ package cloudcare
 import (
 	"bytes"
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/go-kit/kit/log"
 	"github.com/prometheus/common/promlog"
-	"github.com/prometheus/prometheus/config"
 )
 
 var (
-	remoteWriteUrl *url.URL
-	remoteStorage  *Storage
-	PromCfg        config.Config
-	chStop         chan struct{}
-
 	CorsairCloudAssetID   string
 	CorsairTeamID         string
 	CorsairSK             string
@@ -32,8 +25,10 @@ func loop(s *Storage, scrapeurl string, interval int) {
 		storage: s,
 	}
 
-	ticker := time.NewTicker(time.Duration(interval))
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 	defer ticker.Stop()
+
+	var chStop chan struct{}
 
 	for {
 		var buf bytes.Buffer
@@ -65,37 +60,24 @@ func loop(s *Storage, scrapeurl string, interval int) {
 	}
 }
 
-func Start(remotehost string, scrapehost string, interval int) error {
-
-	u, err := url.Parse(remotehost)
-	if err != nil {
-		return err
-	}
-
-	remoteWriteUrl = u
+func Start(remoteHost string, scrapehost string, interval int) error {
 
 	var l promlog.AllowedLevel
 	l.Set("info")
 	logger := promlog.New(l)
 
-	chStop = make(chan struct{})
-
 	RemoteFlushDeadline := time.Duration(60 * time.Second)
 
-	remoteStorage = NewStorage(log.With(logger, "component", "remote"), nil, time.Duration(RemoteFlushDeadline))
+	s := NewStorage(log.With(logger, "component", "remote"), nil, time.Duration(RemoteFlushDeadline))
 
-	if err := remoteStorage.ApplyConfig(&PromCfg); err != nil {
+	if err := s.applyConfig(remoteHost); err != nil {
 		return err
 	}
 
 	go func() {
 		time.Sleep(1 * time.Second)
-		loop(remoteStorage, scrapehost, interval)
+		loop(s, scrapehost, interval)
 	}()
 
 	return nil
-}
-
-func GetDataBridgeUrl() *url.URL {
-	return remoteWriteUrl
 }

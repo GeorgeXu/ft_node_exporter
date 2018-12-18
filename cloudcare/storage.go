@@ -1,6 +1,7 @@
 package cloudcare
 
 import (
+	"net/url"
 	"sync"
 	"time"
 
@@ -52,16 +53,21 @@ func NewStorage(l log.Logger, stCallback func(), flushDeadline time.Duration) *S
 	}
 }
 
-// ApplyConfig updates the state as the new config requires.
-func (s *Storage) ApplyConfig(conf *config.Config) error {
+// applyConfig updates the state as the new config requires.
+func (s *Storage) applyConfig(remoteURL string) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
 	newQueues := []*QueueManager{}
 
+	u, err := url.Parse(remoteURL)
+	if err != nil {
+		return err
+	}
+
 	rwCfg := config.DefaultRemoteWriteConfig
 	rwCfg.URL = &config_util.URL{
-		URL: GetDataBridgeUrl(),
+		URL: u,
 	}
 
 	clientCfg := &ClientConfig{
@@ -74,6 +80,8 @@ func (s *Storage) ApplyConfig(conf *config.Config) error {
 	if err != nil {
 		return err
 	}
+
+	var conf config.Config
 
 	newQueues = append(newQueues, newQueueManager(
 		s.logger,

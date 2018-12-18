@@ -137,7 +137,7 @@ func execute(name string, c Collector, ch chan<- prometheus.Metric) {
 		log.Errorf("ERROR: %s collector failed after %fs: %s", name, duration.Seconds(), err)
 		success = 0
 	} else {
-		log.Debugf("OK: %s collector succeeded after %fs.", name, duration.Seconds())
+		// log.Debugf("OK: %s collector succeeded after %fs.", name, duration.Seconds())
 		success = 1
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDurationDesc, prometheus.GaugeValue, duration.Seconds(), name)
@@ -148,7 +148,7 @@ func doCat(path string) (string, error) {
 
 	cmd := exec.Command(`cat`, []string{path}...)
 
-	log.Debugf("cat: %s", path)
+	// log.Debugf("cat: %s", path)
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -161,7 +161,7 @@ func doCat(path string) (string, error) {
 func doQuery(sql string) (string, error) {
 	cmd := exec.Command(OSQuerydPath, []string{`-S`, `--json`, sql}...)
 
-	log.Debugf("osquery: %s", sql)
+	// log.Debugf("osquery: %s", sql)
 
 	out, err := cmd.Output()
 	if err != nil {
