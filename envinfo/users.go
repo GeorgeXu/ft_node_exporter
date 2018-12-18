@@ -31,6 +31,6 @@ func (c *userCollector) Update(ch chan<- prometheus.Metric) error {
 		return fmt.Errorf("osquery: could not get uses: %s", err)
 	}
 
-	ch <- prometheus.MustNewConstMetric(c.entries, prometheus.GaugeValue, float64(0), j)
+	ch <- prometheus.MustNewConstMetric(c.entries, prometheus.GaugeValue, float64(-1), j)
 	return nil
 }
