@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/log"
-	"github.com/prometheus/node_exporter/osquery"
+	"github.com/prometheus/node_exporter/envinfo"
 )
 
 type envInfoHandler struct {
@@ -33,13 +33,16 @@ func NewEnvInfoHandler() *envInfoHandler {
 }
 
 func (h *envInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	f := r.URL.Query()["collect[]"]
-	if len(f) == 0 {
+	filters := r.URL.Query()["collect[]"]
+
+	log.Debugln("env collect query:", filters)
+
+	if len(filters) == 0 {
 		h.unfilteredHandler.ServeHTTP(w, r)
 		return
 	}
 
-	fh, err := h.innerHandler(f...)
+	fh, err := h.innerHandler(filters...)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("couldn't create filtered metrics handler: %s", err)))
@@ -50,7 +53,7 @@ func (h *envInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *envInfoHandler) innerHandler(f ...string) (http.Handler, error) {
-	c, err := osquery.NewOSQueryCollector(f...)
+	c, err := envinfo.NewEnvInfoCollector(f...)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create collector: %s", err)
 	}
@@ -60,14 +63,22 @@ func (h *envInfoHandler) innerHandler(f ...string) (http.Handler, error) {
 		for _c := range c.Collectors {
 			collectors = append(collectors, _c)
 		}
+
 		sort.Strings(collectors)
+		log.Infof("Enabled env collectors(%d):", len(collectors))
+
 		for _, _c := range collectors {
-			log.Info(" - %s", _c)
+			log.Infof(" - %s", _c)
 		}
 	}
 
+	r := prometheus.NewRegistry()
+	if err := r.Register(c); err != nil {
+		return nil, fmt.Errorf("couldn't register env_info collector: %s", err)
+	}
+
 	handler := promhttp.HandlerFor(
-		prometheus.Gatherers{h.exporterMetricsRegistry},
+		prometheus.Gatherers{h.exporterMetricsRegistry, r},
 		promhttp.HandlerOpts{
 			ErrorLog:      log.NewErrorLogger(),
 			ErrorHandling: promhttp.ContinueOnError,

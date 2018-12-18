@@ -1,4 +1,4 @@
-package osquery
+package envinfo
 
 import (
 	"encoding/base64"
@@ -41,7 +41,7 @@ import (
 	sshd 配置					                   : 不支持
 */
 
-const namespace = "osquery"
+const namespace = "envinfo"
 
 var (
 	OSQuerydPath = ""
@@ -54,13 +54,13 @@ var (
 
 	scrapeDurationDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "scrape", "collector_duration_seconds"),
-		"osquery: Duration of a collector scrape.",
+		"envinfo: Duration of a collector scrape.",
 		[]string{"collector"},
 		nil,
 	)
 	scrapeSuccessDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "scrape", "collector_success"),
-		"osquery: Whether a collector succeeded.",
+		"envinfo: Whether a collector succeeded.",
 		[]string{"collector"},
 		nil,
 	)
@@ -75,11 +75,11 @@ func registerCollector(collector string, isDefaultEnabled bool, factory func() (
 	factories[collector] = factory
 }
 
-type OSQueryCollector struct {
+type EnvInfoCollector struct {
 	Collectors map[string]Collector
 }
 
-func NewOSQueryCollector(filters ...string) (*OSQueryCollector, error) {
+func NewEnvInfoCollector(filters ...string) (*EnvInfoCollector, error) {
 	f := make(map[string]bool)
 	for _, filter := range filters {
 		enabled, exist := collectorState[filter]
@@ -98,29 +98,31 @@ func NewOSQueryCollector(filters ...string) (*OSQueryCollector, error) {
 			collector, err := factories[key]() // call NewxxxCollector()
 			if err != nil {
 				continue
-				//return nil, err
 			}
 			if len(f) == 0 || f[key] {
 				collectors[key] = collector
 			}
 		}
 	}
-	return &OSQueryCollector{Collectors: collectors}, nil
+	return &EnvInfoCollector{Collectors: collectors}, nil
 }
 
-func (c OSQueryCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c EnvInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- scrapeDurationDesc
 	ch <- scrapeSuccessDesc
 }
 
-func (c OSQueryCollector) Collect(ch chan<- prometheus.Metric) {
+func (c EnvInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	wg := sync.WaitGroup{}
 	wg.Add(len(c.Collectors))
+
+	log.Debugf("envinfo try collect...")
+
 	for name, _c := range c.Collectors {
-		go func() {
-			execute(name, _c, ch)
+		go func(name string, ec Collector) {
+			execute(name, ec, ch)
 			wg.Done()
-		}()
+		}(name, _c)
 	}
 	wg.Wait()
 }
@@ -142,13 +144,29 @@ func execute(name string, c Collector, ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(scrapeSuccessDesc, prometheus.GaugeValue, success, name)
 }
 
-func doQuery(sql string) (string, error) {
-	cmd := exec.Command(OSQuerydPath, []string{`-S`, `--json`, sql}...)
+func doCat(path string) (string, error) {
+
+	cmd := exec.Command(`cat`, []string{path}...)
+
+	log.Debugf("cat: %s", path)
 
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
-	//所有 osquery 结果以 base64 编码返回
+
+	return base64.StdEncoding.EncodeToString(out), nil
+}
+
+func doQuery(sql string) (string, error) {
+	cmd := exec.Command(OSQuerydPath, []string{`-S`, `--json`, sql}...)
+
+	log.Debugf("osquery: %s", sql)
+
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
 	return base64.StdEncoding.EncodeToString(out), nil
 }

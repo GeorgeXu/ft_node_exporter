@@ -25,9 +25,9 @@ import (
 	"github.com/prometheus/node_exporter/cfg"
 	"github.com/prometheus/node_exporter/cloudcare"
 	"github.com/prometheus/node_exporter/collector"
+	"github.com/prometheus/node_exporter/envinfo"
 	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/node_exporter/handler"
-	"github.com/prometheus/node_exporter/osquery"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -140,7 +140,7 @@ Golang Version: %s
 		}
 	}
 
-	osquery.OSQuerydPath = path.Join(*flagInstallDir, `osqueryd`)
+	envinfo.OSQuerydPath = path.Join(*flagInstallDir, `osqueryd`)
 
 	http.Handle(*envInfoPath, handler.NewEnvInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))

@@ -116,6 +116,9 @@ func (n NodeCollector) Describe(ch chan<- *prometheus.Desc) {
 func (n NodeCollector) Collect(ch chan<- prometheus.Metric) {
 	wg := sync.WaitGroup{}
 	wg.Add(len(n.Collectors))
+
+	log.Debugf("node-exporter try collect...")
+
 	for name, c := range n.Collectors {
 		go func(name string, c Collector) {
 			execute(name, c, ch)

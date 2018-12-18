@@ -95,16 +95,21 @@ func (h *metricHandler) innerHandler(filters ...string) (http.Handler, error) {
 	if err := r.Register(nc); err != nil {
 		return nil, fmt.Errorf("couldn't register node collector: %s", err)
 	}
+
 	handler := promhttp.HandlerFor(
 		prometheus.Gatherers{h.exporterMetricsRegistry, r},
+		// prometheus.Gatherers{h.exporterMetricsRegistry},
 		promhttp.HandlerOpts{
 			ErrorLog:      log.NewErrorLogger(),
 			ErrorHandling: promhttp.ContinueOnError,
 		},
 	)
+
 	if h.includeExporterMetrics {
+		log.Debugln("promhttp.InstrumentMetricHandler")
 		// Note that we have to use h.exporterMetricsRegistry here to
 		// use the same promhttp metrics for all expositions.
+
 		handler = promhttp.InstrumentMetricHandler(
 			h.exporterMetricsRegistry, handler,
 		)

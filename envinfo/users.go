@@ -1,4 +1,4 @@
-package osquery
+package envinfo
 
 import (
 	"fmt"
@@ -11,26 +11,26 @@ type userCollector struct {
 }
 
 func init() {
-	registerCollector("arp", true, NewUserCollector)
+	registerCollector("users", true, NewUserCollector)
 }
 
 func NewUserCollector() (Collector, error) {
 	return &userCollector{
 		entries: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "user", "entries"),
+			prometheus.BuildFQName(namespace, "user", "list"),
 			"system users",
-			[]string{"users"}, nil,
+			[]string{"json"}, nil,
 		),
 	}, nil
 }
 
 func (c *userCollector) Update(ch chan<- prometheus.Metric) error {
-	b64, err := doQuery("select * from users")
+	j, err := doQuery("select * from users")
 
 	if err != nil {
 		return fmt.Errorf("osquery: could not get uses: %s", err)
 	}
 
-	ch <- prometheus.MustNewConstMetric(c.entries, prometheus.GaugeValue, float64(0), b64)
+	ch <- prometheus.MustNewConstMetric(c.entries, prometheus.GaugeValue, float64(0), j)
 	return nil
 }
