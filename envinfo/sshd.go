@@ -41,6 +41,7 @@ func (c *sshdCollector) Update(ch chan<- prometheus.Metric) error {
 		if err != nil {
 			return err
 		}
+
 		ch <- prometheus.MustNewConstMetric(c.entries, prometheus.GaugeValue, float64(-1), raw)
 		return nil
 	}

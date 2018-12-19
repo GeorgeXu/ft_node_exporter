@@ -155,7 +155,9 @@ func doCat(path string) (string, error) {
 		return "", err
 	}
 
-	return base64.StdEncoding.EncodeToString(out), nil
+	res := base64.RawURLEncoding.EncodeToString(out)
+	// log.Debugf("cat.b64: %s", res)
+	return res, nil
 }
 
 func doQuery(sql string) (string, error) {
@@ -168,5 +170,7 @@ func doQuery(sql string) (string, error) {
 		return "", err
 	}
 
-	return base64.StdEncoding.EncodeToString(out), nil
+	res := base64.RawURLEncoding.EncodeToString(out)
+	// log.Debugf("osquery.b64: %s", res)
+	return res, nil
 }
