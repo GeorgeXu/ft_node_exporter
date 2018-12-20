@@ -18,15 +18,21 @@ var (
 )
 
 func init() {
-	registerCollector("sshd", true, NewSSHDCollector)
+	// registerCollector("sshd", true, NewSSHDCollector, nil)
 }
 
-func NewSSHDCollector() (Collector, error) {
+func NewSSHDCollector(_ *envCfg) (Collector, error) {
+
+	var (
+		subSystem = `sshd`
+		name      = `configure`
+		help      = `sshd configure`
+		tags      = []string{`raw`}
+	)
+
 	return &sshdCollector{
 		entries: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "sshd", "configure"),
-			"sshd configure",
-			[]string{"raw"}, nil,
+			prometheus.BuildFQName(namespace, subSystem, name), help, tags, nil,
 		),
 	}, nil
 }

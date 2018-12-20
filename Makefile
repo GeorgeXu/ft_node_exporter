@@ -39,7 +39,7 @@ local:
 		-kodo-host $(LOCAL_KODO_HOST) -download-addr $(LOCAL_DOWNLOAD_ADDR) -ssl $(LOCAL_SSL) -port $(LOCAL_PORT) \
 		-release local -pub-dir $(PUB_DIR)
 	@strip build/$(NAME)-linux-amd64/$(BIN)
-	@cp osqueryd build/$(NAME)-linux-amd64
+	@cp osqueryd env.json build/$(NAME)-linux-amd64
 	@tar czf $(PUB_DIR)/local/$(NAME)-$(VERSION).tar.gz -C build .
 	tree -Csh $(PUB_DIR)
 
@@ -53,7 +53,7 @@ release:
 		-kodo-host $(RELEASE_KODO_HOST) -download-addr $(RELEASE_DOWNLOAD_ADDR) -ssl $(RELEASE_SSL) -port $(RELEASE_PORT) \
 		-release release -pub-dir $(PUB_DIR)
 	@strip build/$(NAME)-linux-amd64/$(BIN)
-	@cp osqueryd build/$(NAME)-linux-amd64
+	@cp osqueryd env.json build/$(NAME)-linux-amd64
 	@tar czf $(PUB_DIR)/release/$(NAME)-$(VERSION).tar.gz -C build .
 	tree -Csh $(PUB_DIR)
 
@@ -67,7 +67,7 @@ test:
 		-kodo-host $(TEST_KODO_HOST) -download-addr $(TEST_DOWNLOAD_ADDR) -ssl $(TEST_SSL) -port $(TEST_PORT) \
 		-release test -pub-dir $(PUB_DIR)
 	@strip build/$(NAME)-linux-amd64/$(BIN)
-	@cp osqueryd build/$(NAME)-linux-amd64
+	@cp osqueryd env.json build/$(NAME)-linux-amd64
 	@tar czf $(PUB_DIR)/test/$(NAME)-$(VERSION).tar.gz -C build .
 	tree -Csh $(PUB_DIR)
 

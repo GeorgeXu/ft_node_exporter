@@ -26,6 +26,7 @@ type Config struct {
 	ScrapeEnvInfoInterval int             `yaml:"scrap_env_info_interval"`
 	RemoteHost            string          `yaml:"remote_host"`
 	EnableAll             int             `yaml:"enable_all"`
+	EnvCfgFile            string          `yaml:"env_cfg_file"`
 }
 
 var (
@@ -152,9 +153,6 @@ func initPromCfg(c *Config) error {
 			collector.SetCollector(k, v)
 		}
 	}
-
-	// cloudcare.PromCfg.GlobalConfig.ScrapeInterval =
-	// 	model.Duration(c.ScrapeMetricInterval) * model.Duration(time.Second)
 
 	return nil
 }

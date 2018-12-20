@@ -49,8 +49,9 @@ var (
 	//   -S: run as shell mode
 	//   --json: output result in json format
 
-	factories      = make(map[string]func() (Collector, error))
+	factories      = make(map[string]func(*envCfg) (Collector, error))
 	collectorState = make(map[string]bool)
+	factoryArgs    = make(map[string]*envCfg)
 
 	scrapeDurationDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "scrape", "collector_duration_seconds"),
@@ -70,9 +71,12 @@ type Collector interface {
 	Update(ch chan<- prometheus.Metric) error
 }
 
-func registerCollector(collector string, isDefaultEnabled bool, factory func() (Collector, error)) {
+func registerCollector(collector string, isDefaultEnabled bool, factory func(*envCfg) (Collector, error), arg *envCfg) {
 	collectorState[collector] = isDefaultEnabled
 	factories[collector] = factory
+	if arg != nil {
+		factoryArgs[collector] = arg
+	}
 }
 
 type EnvInfoCollector struct {
@@ -95,7 +99,7 @@ func NewEnvInfoCollector(filters ...string) (*EnvInfoCollector, error) {
 	collectors := make(map[string]Collector)
 	for key, enabled := range collectorState {
 		if enabled {
-			collector, err := factories[key]() // call NewxxxCollector()
+			collector, err := factories[key](factoryArgs[key]) // call NewxxxCollector()
 			if err != nil {
 				continue
 			}
@@ -156,7 +160,7 @@ func doCat(path string) (string, error) {
 	}
 
 	res := base64.RawURLEncoding.EncodeToString(out)
-	// log.Debugf("cat.b64: %s", res)
+	log.Debugf("cat.b64: %s", res)
 	return res, nil
 }
 
@@ -171,6 +175,6 @@ func doQuery(sql string) (string, error) {
 	}
 
 	res := base64.RawURLEncoding.EncodeToString(out)
-	// log.Debugf("osquery.b64: %s", res)
+	log.Debugf("osquery.b64: %s", res)
 	return res, nil
 }

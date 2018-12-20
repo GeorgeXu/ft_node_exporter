@@ -50,6 +50,7 @@ var (
 	flagVersionInfo           = kingpin.Flag("version", "show version info").Bool()
 	flagEnableAllCollectors   = kingpin.Flag("enable-all", "enable all collectors").Default("0").Int()
 	flagInstallDir            = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
+	flagEnvCfg                = kingpin.Flag("env-cfg", "env-collector configure").Default("/usr/local/cloudcare/env.json").String()
 )
 
 func initCfg() error {
@@ -90,6 +91,7 @@ func initCfg() error {
 	}
 
 	cfg.Cfg.Port = *flagPort
+	cfg.Cfg.EnvCfgFile = *flagEnvCfg
 
 	cfg.Cfg.Collectors = collector.ListAllCollectors()
 
@@ -128,6 +130,10 @@ Golang Version: %s
 	cfg.LoadConfig(*flagCfgFile)
 	cfg.DumpConfig(*flagCfgFile) // load 过程中可能会修改 cfg.Cfg, 需重新写入
 
+	// init envinfo configure
+	envinfo.OSQuerydPath = path.Join(*flagInstallDir, `osqueryd`)
+	envinfo.Init(cfg.Cfg.EnvCfgFile)
+
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
 		getURLMetric := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *metricsPath)
@@ -145,8 +151,6 @@ Golang Version: %s
 
 		// TODO: 这些主动上报收集器, 并入集群模式时, 需要设计退出机制
 	}
-
-	envinfo.OSQuerydPath = path.Join(*flagInstallDir, `osqueryd`)
 
 	http.Handle(*envInfoPath, handler.NewEnvInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))

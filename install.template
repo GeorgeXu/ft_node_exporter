@@ -13,6 +13,7 @@ service_name="corsair"
 install_dir=/usr/local/cloudcare
 pid_file="${install_dir}"/"${bin_name}".pid
 yml_cfg="${install_dir}"/cfg.yml
+env_cfg="${install_dir}"/env.json
 binary="${install_dir}"/"${bin_name}"
 log="${install_dir}"/log
 install_log="${install_dir}"/install.log
@@ -53,6 +54,11 @@ do
   opt="$1"
 
   case $opt in
+
+		--env-cfg)
+			env_cfg="$2"
+			shift
+			;;
 
     --team-id)
       team_id="$2"
@@ -183,6 +189,7 @@ if [ "${arch}" = "x86_64" ]; then
   echo 'install on platform x86_64...' | tee -a $install_log
   mv "${install_dir}"/{{.Name}}-linux-amd64/{{.Name}} "${install_dir}"/
   mv "${install_dir}"/{{.Name}}-linux-amd64/osqueryd "${install_dir}"/
+  mv "${install_dir}"/{{.Name}}-linux-amd64/env.json "${install_dir}"/
 else
   echo 'i386 not support, exit now!' | tee -a $install_log
   exit -1
@@ -204,6 +211,7 @@ if [ $upgrade_flag -eq 0 ]; then
     --cfg "${yml_cfg}" \
     --remote-host "${remote_host}" \
     --host "${host_ip}" \
+		--env-cfg ${env_cfg} \
 		--port "${corsair_port}" ; then
 
     printf "ok\n" | tee -a ${install_log}

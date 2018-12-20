@@ -74,3 +74,36 @@
 ## 收集器列表
 
 参见[这里](https://confluence.jiagouyun.com/pages/viewpage.action?pageId=62096517)
+
+## 通过配置来收集数据
+
+直接通过配置文件即可实现收集器的编写, 示例如下
+
+	{
+		"envs" : [
+			{
+				"name": "linux_routes",           # 命名
+				"sub_system": "routes",           # 收集器标识
+				"type": "osquery",                # 收集数据的方式, 目前只有 osquery 和 cat 两种
+				"sql": "SELECT * FROM routes",    # 如果是 osquery 则在这里列出 SQL 语句
+				"tags": ["json"],                 # 收集到的数据格式, 目前 osquery 收集到的是 JSON
+				"help": "list all routes",        # 帮助信息
+				"enabled": true                   # 是否开启
+			},
+
+			{
+				"name": "sshd_configure",
+				"sub_system": "sshd",
+				"type": "cat",
+				"files": [                 # 要 cat 的文件列表
+					"/etc/ssh/sshd_config"
+				],
+				"any": false,              # 所有都 cat 还是只 cat 第一个存在的文件
+				"tags": ["raw"],           # 所有 cat 收集到的数据都是 raw 格式
+				"help": "show sshd configure",
+				"enabled": true
+			}
+		]
+	}
+
+当前 corsair 已经支持通过读写该配置来生成收集器, 一定程度上简化了收集器的编写/发布/部署. 运维同学, 也能写收集器了. 这些配置以单独的配置文件下发到用户的每台机器上, 通过更新该配置文件即可扩充/调整收集器的运行. 

@@ -11,17 +11,22 @@ type userCollector struct {
 }
 
 func init() {
-	registerCollector("users", true, NewUserCollector)
+	// registerCollector("users", true, NewUserCollector, nil)
 }
 
-func NewUserCollector() (Collector, error) {
+func NewUserCollector(_ *envCfg) (Collector, error) {
+
+	var (
+		subSystem = `user`
+		name      = `list`
+		help      = `system users`
+		tags      = []string{`json`}
+	)
+
 	return &userCollector{
 		entries: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "user", "list"),
-			"system users",
-			[]string{"json"}, nil,
-		),
-	}, nil
+			prometheus.BuildFQName(namespace, subSystem, name),
+			help, tags, nil)}, nil
 }
 
 func (c *userCollector) Update(ch chan<- prometheus.Metric) error {
