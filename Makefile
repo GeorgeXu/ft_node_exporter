@@ -3,7 +3,7 @@
 default: local
 
 # devops 测试环境
-TEST_KODO_HOST = http://test-kodo.cloudcare.com:9527
+TEST_KODO_HOST = http://test-kodo.cloudcare.com
 TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/test
 TEST_SSL = 0
 TEST_PORT = 80
