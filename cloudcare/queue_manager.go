@@ -69,12 +69,19 @@ func dumpSamples(samples model.Samples) (string, error) {
 	return string(b), nil
 }
 
-func newQueueManager(logger log.Logger, cfg config.QueueConfig, externalLabels model.LabelSet, relabelConfigs []*config.RelabelConfig, client StorageClient, flushDeadline time.Duration) *QueueManager {
+func newQueueManager(logger log.Logger,
+	cfg config.QueueConfig,
+	externalLabels model.LabelSet,
+	relabelConfigs []*config.RelabelConfig,
+	client StorageClient,
+	flushDeadline time.Duration) *QueueManager {
+
 	if logger == nil {
 		logger = log.NewNopLogger()
 	} else {
 		logger = log.With(logger, "queue", client.Name())
 	}
+
 	t := &QueueManager{
 		logger:         logger,
 		flushDeadline:  flushDeadline,
@@ -93,6 +100,7 @@ func newQueueManager(logger log.Logger, cfg config.QueueConfig, externalLabels m
 		samplesOut:         newEWMARate(ewmaWeight, shardUpdateDuration),
 		samplesOutDuration: newEWMARate(ewmaWeight, shardUpdateDuration),
 	}
+
 	t.shards = t.newShards(t.numShards)
 	//numShards.WithLabelValues(t.queueName).Set(float64(t.numShards))
 	//shardCapacity.WithLabelValues(t.queueName).Set(float64(t.cfg.Capacity))
@@ -350,11 +358,6 @@ func (s *shards) enqueue(sample *model.Sample) bool {
 	}
 }
 
-func addTags(s *model.Sample) {
-	s.Metric[model.LabelName(`cloud_asset_id`)] = model.LabelValue(CorsairCloudAssetID)
-	s.Metric[model.LabelName(`host`)] = model.LabelValue(CorsairHost)
-}
-
 func (s *shards) runShard(i int) {
 	defer func() {
 		if atomic.AddInt32(&s.running, -1) == 0 {
@@ -395,8 +398,7 @@ func (s *shards) runShard(i int) {
 				return
 			}
 
-			// queueLength.WithLabelValues(s.qm.queueName).Dec()
-			addTags(sample)
+			AddTags(sample)
 
 			pendingSamples = append(pendingSamples, sample)
 

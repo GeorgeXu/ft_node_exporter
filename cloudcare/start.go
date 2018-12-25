@@ -6,7 +6,13 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promlog"
+)
+
+const (
+	TagCloudAssetID = `cloud_asset_id`
+	TagHost         = `host`
 )
 
 var (
@@ -18,6 +24,11 @@ var (
 	CorsairPort           int
 	CorsairScrapeInterval int
 )
+
+func AddTags(s *model.Sample) {
+	s.Metric[model.LabelName(`cloud_asset_id`)] = model.LabelValue(CorsairCloudAssetID)
+	s.Metric[model.LabelName(`host`)] = model.LabelValue(CorsairHost)
+}
 
 func loop(s *Storage, scrapeurl string, interval int) {
 

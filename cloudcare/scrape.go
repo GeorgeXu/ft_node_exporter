@@ -75,7 +75,6 @@ func (s *scrape) scrape(w io.Writer, scrapeurl string) (string, error) {
 	}
 
 	return resp.Header.Get("Content-Type"), nil
-
 }
 
 func (s *scrape) appendScrape(b []byte, contentType string, ts time.Time) {

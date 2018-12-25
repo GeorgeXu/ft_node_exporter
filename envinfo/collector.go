@@ -11,36 +11,6 @@ import (
 	"github.com/prometheus/common/log"
 )
 
-// 通过 osquery 收集各种主机数据
-
-// osquery 各种表以及系统数据映射
-/*
-
-	用户列表					                   : users
-	用户分组列表			                   : groups
-	主机名和IP配置文件                   : etc_hosts
-	DNS解析配置文件		                   : dns_resolvers
-	可执行sudo的用户列表                 : sudoers
-	内核参数配置                         : system_controls
-	Linux PAM认证下可打开的文件句柄数限制: ulimit_info
-	定时任务                             : crontab
-	远程访问白名单配置                   : 不支持
-	远程访问黑名单配置                   : 不支持
-	有效登陆shell的列表                  : 不支持
-	用户登录后终端显示消息配置           : 不支持
-	用户本地登录前终端显示消息置         : 不支持
-	用户远程登录前终端显示消息配置       : 不支持
-	自启动脚本                           : 不支持
-	不同运行级别自启动脚本               : 不支持
-	当前主机文件系统的相关信息           : 不支持
-	用户环境配置信息                     : 不支持
-	用户bash shell配置信息               : 不支持
-	SELinux(安全增加)配置文件            : 未知
-	系统开启启动配置                     : 不支持
-	主机用户列表(含加密密码)             : 不支持
-	sshd 配置					                   : 不支持
-*/
-
 const namespace = "envinfo"
 
 var (
@@ -135,17 +105,10 @@ func execute(name string, c Collector, ch chan<- prometheus.Metric) {
 	begin := time.Now()
 	err := c.Update(ch)
 	duration := time.Since(begin)
-	var success float64
 
 	if err != nil {
 		log.Errorf("ERROR: %s collector failed after %fs: %s", name, duration.Seconds(), err)
-		success = 0
-	} else {
-		// log.Debugf("OK: %s collector succeeded after %fs.", name, duration.Seconds())
-		success = 1
 	}
-	ch <- prometheus.MustNewConstMetric(scrapeDurationDesc, prometheus.GaugeValue, duration.Seconds(), name)
-	ch <- prometheus.MustNewConstMetric(scrapeSuccessDesc, prometheus.GaugeValue, success, name)
 }
 
 func doCat(path string) (string, error) {

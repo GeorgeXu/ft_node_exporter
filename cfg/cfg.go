@@ -29,6 +29,11 @@ type Config struct {
 	EnvCfgFile            string          `yaml:"env_cfg_file"`
 }
 
+type Meta struct {
+	CloudAssetID string `json:"cloud_asset_id"`
+	Host         string `json:"host"`
+}
+
 var (
 	Cfg Config
 )

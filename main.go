@@ -14,6 +14,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
@@ -30,8 +31,11 @@ import (
 )
 
 var (
-	metricsPath            = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
-	envInfoPath            = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/env_infos").String()
+	metricsPath = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
+	envInfoPath = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/env_infos").String()
+
+	metaPath = kingpin.Flag("web.meta-path", "Path under which to expose meta info.").Default("/meta").String()
+
 	disableExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).").Bool()
 
 	flagSingleMode            = kingpin.Flag("single-mode", "run as single node").Default("0").Int()
@@ -154,6 +158,18 @@ Golang Version: %s
 
 	http.Handle(*envInfoPath, handler.NewEnvInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
+	http.HandleFunc(*metaPath, func(w http.ResponseWriter, r *http.Request) {
+		j, err := json.Marshal(&cfg.Meta{
+			CloudAssetID: cfg.Cfg.CloudAssetID,
+			Host:         cfg.Cfg.Host,
+		})
+		if err != nil {
+			log.Errorf("[error] %s, ignored", err.Error())
+			fmt.Fprintf(w, err.Error())
+		} else {
+			fmt.Fprintf(w, string(j))
+		}
+	})
 
 	listenAddress := fmt.Sprintf("0.0.0.0:%d", cfg.Cfg.Port)
 

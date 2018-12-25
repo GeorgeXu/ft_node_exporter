@@ -98,7 +98,6 @@ func (h *metricHandler) innerHandler(filters ...string) (http.Handler, error) {
 
 	handler := promhttp.HandlerFor(
 		prometheus.Gatherers{h.exporterMetricsRegistry, r},
-		// prometheus.Gatherers{h.exporterMetricsRegistry},
 		promhttp.HandlerOpts{
 			ErrorLog:      log.NewErrorLogger(),
 			ErrorHandling: promhttp.ContinueOnError,
@@ -110,9 +109,7 @@ func (h *metricHandler) innerHandler(filters ...string) (http.Handler, error) {
 		// Note that we have to use h.exporterMetricsRegistry here to
 		// use the same promhttp metrics for all expositions.
 
-		handler = promhttp.InstrumentMetricHandler(
-			h.exporterMetricsRegistry, handler,
-		)
+		handler = promhttp.InstrumentMetricHandler(h.exporterMetricsRegistry, handler)
 	}
 	return handler, nil
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/node_exporter/cloudcare"
 )
 
 const (
@@ -60,6 +61,7 @@ func Init(cfgFile string) {
 	}
 
 	for _, ec := range envCfgs.Envs {
+		ec.Tags = append(ec.Tags, cloudcare.TagCloudAssetID, cloudcare.TagHost) // 追加默认 tags
 		registerCollector(ec.SubSystem, ec.Enabled, NewEnvCollector, ec)
 	}
 }
@@ -101,8 +103,14 @@ func catUpdate(ec *envCollector, ch chan<- prometheus.Metric) error {
 	}
 
 	raw := strings.Join(rawFileContents, fileSep)
-	ch <- prometheus.MustNewConstMetric(ec.entries, prometheus.GaugeValue, float64(-1), raw)
+	ch <- newEnvMetric(ec, raw)
 	return nil
+}
+
+func newEnvMetric(ec *envCollector, envVal string) prometheus.Metric {
+	return prometheus.MustNewConstMetric(ec.entries, prometheus.GaugeValue, float64(-1), envVal,
+		// 此处追加两个 tag, 在 queue-manager 那边也会追加, 有重复, 待去掉
+		cloudcare.CorsairCloudAssetID, cloudcare.CorsairHost)
 }
 
 func osqueryUpdate(ec *envCollector, ch chan<- prometheus.Metric) error {
@@ -111,6 +119,6 @@ func osqueryUpdate(ec *envCollector, ch chan<- prometheus.Metric) error {
 		return err
 	}
 
-	ch <- prometheus.MustNewConstMetric(ec.entries, prometheus.GaugeValue, float64(-1), j)
+	ch <- newEnvMetric(ec, j)
 	return nil
 }
