@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -15,10 +16,14 @@ const (
 	envCollectorTypeCat     = `cat`
 	envCollectorTypeOSQuery = `osquery`
 
+	envPlatformWindows = `windows`
+	envPlatformLinux   = `linux`
+
 	fileSep = "\r\n"
 )
 
 type envCfg struct {
+	Platform  string `json:"platform"`
 	Name      string `json:"name"`
 	SubSystem string `json:"sub_system"`
 	Type      string `json:"type"`
@@ -61,8 +66,12 @@ func Init(cfgFile string) {
 	}
 
 	for _, ec := range envCfgs.Envs {
-		ec.Tags = append(ec.Tags, cloudcare.TagCloudAssetID, cloudcare.TagHost) // 追加默认 tags
-		registerCollector(ec.SubSystem, ec.Enabled, NewEnvCollector, ec)
+		if ec.Platform != "" && ec.Platform == runtime.GOOS {
+			ec.Tags = append(ec.Tags, cloudcare.TagCloudAssetID, cloudcare.TagHost) // 追加默认 tags
+			registerCollector(ec.SubSystem, ec.Enabled, NewEnvCollector, ec)
+		} else {
+			log.Printf("[info] skip collector %s(platform: %s)", ec.Name, ec.Platform)
+		}
 	}
 }
 

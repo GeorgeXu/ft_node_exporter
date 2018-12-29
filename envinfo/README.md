@@ -84,6 +84,7 @@
 			{
 				"name": "linux_routes",           # 命名
 				"sub_system": "routes",           # 收集器标识
+				"platform": "linux",              # 收集器运行平台(目前支持 windows/linux, 如果两个平台都要支持, 则填 "")
 				"type": "osquery",                # 收集数据的方式, 目前只有 osquery 和 cat 两种
 				"sql": "SELECT * FROM routes",    # 如果是 osquery 则在这里列出 SQL 语句
 				"tags": ["json"],                 # 收集到的数据格式, 目前 osquery 收集到的是 JSON
@@ -94,6 +95,7 @@
 			{
 				"name": "sshd_configure",
 				"sub_system": "sshd",
+				"platform": "linux",
 				"type": "cat",
 				"files": [                 # 要 cat 的文件列表
 					"/etc/ssh/sshd_config"
