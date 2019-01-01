@@ -12,11 +12,11 @@ service_name="corsair"
 # 安装目录设置
 install_dir=/usr/local/cloudcare
 pid_file="${install_dir}"/"${bin_name}".pid
-yml_cfg="${install_dir}"/cfg.yml
+yml_cfg="${install_dir}"/corsair.yml
 env_cfg="${install_dir}"/env.json
 binary="${install_dir}"/"${bin_name}"
-log="${install_dir}"/log
-install_log="${install_dir}"/install.log
+log="${install_dir}"/corsair.log
+install_log="${install_dir}"/corsair.install.log
 
 # 创建安装目录
 if ! mkdir -p "${install_dir}"; then
@@ -57,6 +57,11 @@ do
 
 		--env-cfg)
 			env_cfg="$2"
+			shift
+			;;
+
+		--cfg)
+			yml_cfg="$2"
 			shift
 			;;
 
@@ -240,6 +245,6 @@ fi
 printf "starting corsair ...\n" | tee -a ${install_log}
 
 # 直接后台运行 corsair
-(${binary} --cfg "${yml_cfg}" &> ${install_dir}/log &)
+(${binary} --cfg "${yml_cfg}" &> ${log} &)
 
 printf "Success!\n" | tee -a ${install_log}
