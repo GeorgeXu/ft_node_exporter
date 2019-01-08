@@ -72,7 +72,7 @@ func initCfg() error {
 
 	// unique-id 为必填参数
 	if *flagTeamID == "" {
-		log.Fatal("invalid unique-id")
+		log.Fatal("invalid team-id")
 	} else {
 		cfg.Cfg.TeamID = *flagTeamID
 	}
