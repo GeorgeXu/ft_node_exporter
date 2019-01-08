@@ -446,7 +446,7 @@ func (s *shards) sendSamplesWithBackoff(samples model.Samples) {
 
 		level.Warn(s.qm.logger).Log("msg",
 			"Error sending samples to remote storage", "samples",
-			ds, "err", err)
+			len(ds), "bytes", "err", err)
 
 		if _, ok := err.(recoverableError); !ok {
 			break
