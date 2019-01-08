@@ -55,6 +55,7 @@ var (
 	flagEnableAllCollectors   = kingpin.Flag("enable-all", "enable all collectors").Default("0").Int()
 	flagInstallDir            = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
 	flagEnvCfg                = kingpin.Flag("env-cfg", "env-collector configure").Default("/usr/local/cloudcare/env.json").String()
+	flagProvider              = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
 )
 
 func initCfg() error {
@@ -96,6 +97,7 @@ func initCfg() error {
 
 	cfg.Cfg.Port = *flagPort
 	cfg.Cfg.EnvCfgFile = *flagEnvCfg
+	cfg.Cfg.Provider = *flagProvider
 
 	cfg.Cfg.Collectors = collector.ListAllCollectors()
 
@@ -162,6 +164,7 @@ Golang Version: %s
 		j, err := json.Marshal(&cfg.Meta{
 			CloudAssetID: cfg.Cfg.CloudAssetID,
 			Host:         cfg.Cfg.Host,
+			Provider:     cfg.Cfg.Provider,
 		})
 		if err != nil {
 			log.Errorf("[error] %s, ignored", err.Error())

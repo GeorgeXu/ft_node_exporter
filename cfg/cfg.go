@@ -27,11 +27,13 @@ type Config struct {
 	RemoteHost            string          `yaml:"remote_host"`
 	EnableAll             int             `yaml:"enable_all"`
 	EnvCfgFile            string          `yaml:"env_cfg_file"`
+	Provider              string          `json:"provider"`
 }
 
 type Meta struct {
 	CloudAssetID string `json:"cloud_asset_id"`
 	Host         string `json:"host"`
+	Provider     string `json:"provider"`
 }
 
 var (

@@ -17,6 +17,7 @@ env_cfg="${install_dir}"/env.json
 binary="${install_dir}"/"${bin_name}"
 log="${install_dir}"/log
 install_log="${install_dir}"/install.log
+provider="aliyun"
 
 # 创建安装目录
 if ! mkdir -p "${install_dir}"; then
@@ -54,6 +55,11 @@ do
   opt="$1"
 
   case $opt in
+
+		--provider)
+			provider="$2"
+			shift
+			;;
 
 		--env-cfg)
 			env_cfg="$2"
@@ -211,7 +217,8 @@ if [ $upgrade_flag -eq 0 ]; then
     --cfg "${yml_cfg}" \
     --remote-host "${remote_host}" \
     --host "${host_ip}" \
-		--env-cfg ${env_cfg} \
+		--env-cfg "${env_cfg}" \
+		--provider "${provider}" \
 		--port "${corsair_port}" ; then
 
     printf "ok\n" | tee -a ${install_log}
