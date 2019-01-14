@@ -21,7 +21,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/log"
-	// "github.com/prometheus/node_exporter/cloudcare"
 )
 
 // Namespace defines the common namespace to be used by all metrics.
@@ -48,8 +47,9 @@ const (
 )
 
 var (
-	factories      = make(map[string]func() (Collector, error))
-	collectorState = make(map[string]bool)
+	factories        = make(map[string]func() (Collector, error))
+	collectorState   = make(map[string]bool)
+	failedCollectors = make(map[string]int) // 失败次数过多, 则踢出收集器列表
 )
 
 func ListAllCollectors() map[string]bool {
@@ -118,24 +118,53 @@ func (n NodeCollector) Collect(ch chan<- prometheus.Metric) {
 	wg := sync.WaitGroup{}
 	wg.Add(len(n.Collectors))
 
+	chFailed := make(chan string, len(n.Collectors))
+	defer close(chFailed)
+
 	log.Debugf("node-exporter try collect...")
 
 	for name, c := range n.Collectors {
 		go func(name string, c Collector) {
-			execute(name, c, ch)
+			execute(name, c, ch, chFailed)
 			wg.Done()
 		}(name, c)
 	}
-	wg.Wait()
+	wg.Wait() // 等待所有 collector 跑完
+
+	for {
+		select {
+		case name := <-chFailed:
+			n.addFailed(name)
+		default:
+			return
+		}
+	}
 }
 
-func execute(name string, c Collector, ch chan<- prometheus.Metric) {
+func (n NodeCollector) addFailed(name string) {
+	if _, ok := failedCollectors[name]; !ok {
+		failedCollectors[name] = 1
+	} else {
+		failedCollectors[name]++
+	}
+
+	// 由于默认开启了所有的收集器, 所以, 有一些收集器会不成功, 失败次数过多, 则将其踢出去
+	if failedCollectors[name] > 3 {
+		log.Warnf("WARN: %s collector failed %d times, remove it.", name, failedCollectors[name])
+		delete(n.Collectors, name)
+	} else {
+		log.Warnf("WARN: %s collector failed %d times", name, failedCollectors[name])
+	}
+}
+
+func execute(name string, c Collector, ch chan<- prometheus.Metric, chFailed chan<- string) {
 	begin := time.Now()
 	err := c.Update(ch)
 	duration := time.Since(begin)
 
 	if err != nil {
 		log.Errorf("ERROR: %s collector failed after %fs: %s", name, duration.Seconds(), err)
+		chFailed <- name
 	} else {
 		log.Debugf("OK: %s collector succeeded after %fs.", name, duration.Seconds())
 	}
