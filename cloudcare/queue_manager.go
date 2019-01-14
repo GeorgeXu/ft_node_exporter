@@ -143,7 +143,8 @@ func (t *QueueManager) Append(s *model.Sample) error {
 	} else {
 		//droppedSamplesTotal.WithLabelValues(t.queueName).Inc()
 		if t.logLimiter.Allow() {
-			level.Warn(t.logger).Log("msg", "Remote storage queue full, discarding sample. Multiple subsequent messages of this kind may be suppressed.")
+			level.Warn(t.logger).Log("msg",
+				"Remote storage queue full, discarding sample. Multiple subsequent messages of this kind may be suppressed.")
 		}
 	}
 	return nil

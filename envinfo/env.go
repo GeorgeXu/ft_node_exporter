@@ -24,7 +24,6 @@ const (
 
 type envCfg struct {
 	Platform  string `json:"platform"`
-	Name      string `json:"name"`
 	SubSystem string `json:"sub_system"`
 	Type      string `json:"type"`
 	SQL       string `json:"sql"`
@@ -50,7 +49,7 @@ func NewEnvCollector(cfg *envCfg) (Collector, error) {
 	return &envCollector{
 		cfg: cfg,
 		entries: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, cfg.SubSystem, cfg.Name),
+			prometheus.BuildFQName(namespace, cfg.SubSystem, `_`),
 			cfg.Help, cfg.Tags, nil)}, nil
 }
 
@@ -70,7 +69,7 @@ func Init(cfgFile string) {
 			ec.Tags = append(ec.Tags, cloudcare.TagCloudAssetID, cloudcare.TagHost) // 追加默认 tags
 			registerCollector(ec.SubSystem, ec.Enabled, NewEnvCollector, ec)
 		} else {
-			log.Printf("[info] skip collector %s(platform: %s)", ec.Name, ec.Platform)
+			log.Printf("[info] skip collector %s(platform: %s)", ec.SubSystem, ec.Platform)
 		}
 	}
 }
