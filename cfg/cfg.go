@@ -14,20 +14,22 @@ import (
 )
 
 type Config struct {
-	TeamID                string          `yaml:"team_id"`
-	CloudAssetID          string          `yaml:"cloud_asset_id"`
-	AK                    string          `yaml:"ak"`
-	SK                    string          `yaml:"sk"`
-	Port                  int             `yaml:"port"`
-	Collectors            map[string]bool `yaml:"collectors"`
-	SingleMode            int             `yaml:"single_mode"`
-	Host                  string          `yaml:"host"`
-	ScrapeMetricInterval  int             `yaml:"scrap_metric_interval"`
-	ScrapeEnvInfoInterval int             `yaml:"scrap_env_info_interval"`
-	RemoteHost            string          `yaml:"remote_host"`
-	EnableAll             int             `yaml:"enable_all"`
-	EnvCfgFile            string          `yaml:"env_cfg_file"`
-	Provider              string          `json:"provider"`
+	TeamID                 string          `yaml:"team_id"`
+	CloudAssetID           string          `yaml:"cloud_asset_id"`
+	AK                     string          `yaml:"ak"`
+	SK                     string          `yaml:"sk"`
+	Port                   int             `yaml:"port"`
+	Collectors             map[string]bool `yaml:"collectors"`
+	SingleMode             int             `yaml:"single_mode"`
+	Host                   string          `yaml:"host"`
+	ScrapeMetricInterval   int             `yaml:"scrap_metric_interval"`
+	ScrapeEnvInfoInterval  int             `yaml:"scrap_env_info_interval"`
+	ScrapeFileInfoInterval int             `yaml:"scrap_file_info_interval"`
+	RemoteHost             string          `yaml:"remote_host"`
+	EnableAll              int             `yaml:"enable_all"`
+	EnvCfgFile             string          `yaml:"env_cfg_file"`
+	FileInfoCfgFile        string          `yaml:"fileinfo_cfg_file"`
+	Provider               string          `json:"provider"`
 }
 
 type Meta struct {

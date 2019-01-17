@@ -1,6 +1,30 @@
-global:
-  unique_id: uid111
-  instance_id: asdfg
-  ak: aaa
-  sk: uBZGx+GSlsCjBcHZzQlVLWrp8HAcgI9a++4davpLoc2fbr2011hUo22CI9Y6AbJ7O6GjCZPIjhkrRN5NGC9mqWSg4zxydp4w4/M04QVt+CJMlUht8cm8s0LvdIEuuuIrCIqshnuIhRCbF22A0S5lew3oJOH5RgxfWnKXYAKOuMk=
-  port: "9100"
+team_id: "111"
+cloud_asset_id: "222"
+ak: "333"
+sk: v0AQkY69kU9/VxJj3mxA/7q3qDnkbiaykehKusMEezsaFTY8Xiwn0vBVnE58T/rRRxXbSXTR4rqjxacCbmMnizL1F5B8EA8Tl0gs/rUQRJ2lB0QOWyQXeGdB7cCLnDYS3UeyTL04DXzuIm+cXL88OEQRrMFLDInJMiGqR3fqH7Q=
+port: 9100
+collectors:
+  boottime: true
+  buddyinfo: false
+  cpu: true
+  diskstats: true
+  filesystem: true
+  loadavg: true
+  meminfo: true
+  netdev: true
+  nginx: true
+  ntp: false
+  runit: false
+  supervisord: false
+  textfile: false
+  time: true
+single_mode: 0
+host: ""
+scrap_metric_interval: 60
+scrap_env_info_interval: 900
+scrap_file_info_interval: 900
+remote_host: http://kodo.cloudcare.com
+enable_all: 0
+env_cfg_file: /usr/local/cloudcare/env.json
+fileinfo_cfg_file: /usr/local/cloudcare/conf.json
+provider: aliyun
