@@ -25,37 +25,41 @@ import (
 	"github.com/prometheus/node_exporter/cloudcare"
 	"github.com/prometheus/node_exporter/collector"
 	"github.com/prometheus/node_exporter/envinfo"
+	"github.com/prometheus/node_exporter/fileinfo"
 	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/node_exporter/handler"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	metricsPath = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
-	envInfoPath = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/env_infos").String()
+	metricsPath  = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
+	envInfoPath  = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/env_infos").String()
+	fileInfoPath = kingpin.Flag("web.telemetry-file-info-path", "Path under which to expose file info.").Default("/file_infos").String()
 
 	metaPath = kingpin.Flag("web.meta-path", "Path under which to expose meta info.").Default("/meta").String()
 
 	disableExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).").Bool()
 
-	flagSingleMode            = kingpin.Flag("single-mode", "run as single node").Default("0").Int()
-	flagInit                  = kingpin.Flag("init", `init collector`).Bool()
-	flagUpgrade               = kingpin.Flag("upgrade", ``).Bool()
-	flagHost                  = kingpin.Flag("host", `eg. ip addr`).String()
-	flagRemoteHost            = kingpin.Flag("remote-host", `data bridge addr`).Default("http://kodo.cloudcare.com").String()
-	flagScrapeMetricInterval  = kingpin.Flag("scrape-metric-interval", "frequency to upload metric data").Default("60").Int()
-	flagScrapeEnvInfoInterval = kingpin.Flag("scrape-env-info-interval", "frequency to upload env info data").Default("900").Int()
-	flagTeamID                = kingpin.Flag("team-id", "User ID").String()
-	flagCloudAssetID          = kingpin.Flag("cloud-asset-id", "cloud instance ID").String()
-	flagAK                    = kingpin.Flag("ak", `Access Key`).String()
-	flagSK                    = kingpin.Flag("sk", `Secret Key`).String()
-	flagPort                  = kingpin.Flag("port", `web listen port`).Default("9100").Int()
-	flagCfgFile               = kingpin.Flag("cfg", `configure file`).Default("cfg.yml").String()
-	flagVersionInfo           = kingpin.Flag("version", "show version info").Bool()
-	flagEnableAllCollectors   = kingpin.Flag("enable-all", "enable all collectors").Default("0").Int()
-	flagInstallDir            = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
-	flagEnvCfg                = kingpin.Flag("env-cfg", "env-collector configure").Default("/usr/local/cloudcare/env.json").String()
-	flagProvider              = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
+	flagSingleMode             = kingpin.Flag("single-mode", "run as single node").Default("0").Int()
+	flagInit                   = kingpin.Flag("init", `init collector`).Bool()
+	flagUpgrade                = kingpin.Flag("upgrade", ``).Bool()
+	flagHost                   = kingpin.Flag("host", `eg. ip addr`).String()
+	flagRemoteHost             = kingpin.Flag("remote-host", `data bridge addr`).Default("http://kodo.cloudcare.com").String()
+	flagScrapeMetricInterval   = kingpin.Flag("scrape-metric-interval", "frequency to upload metric data").Default("60").Int()
+	flagScrapeEnvInfoInterval  = kingpin.Flag("scrape-env-info-interval", "frequency to upload env info data").Default("900").Int()
+	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval", "frequency to upload file info data").Default("900").Int()
+	flagTeamID                 = kingpin.Flag("team-id", "User ID").String()
+	flagCloudAssetID           = kingpin.Flag("cloud-asset-id", "cloud instance ID").String()
+	flagAK                     = kingpin.Flag("ak", `Access Key`).String()
+	flagSK                     = kingpin.Flag("sk", `Secret Key`).String()
+	flagPort                   = kingpin.Flag("port", `web listen port`).Default("9100").Int()
+	flagCfgFile                = kingpin.Flag("cfg", `configure file`).Default("cfg.yml").String()
+	flagVersionInfo            = kingpin.Flag("version", "show version info").Bool()
+	flagEnableAllCollectors    = kingpin.Flag("enable-all", "enable all collectors").Default("0").Int()
+	flagInstallDir             = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
+	flagEnvCfg                 = kingpin.Flag("env-cfg", "env-collector configure").Default("/usr/local/cloudcare/env.json").String()
+	flagFileInfoCfg            = kingpin.Flag("fileinfo-cfg", "fileinfo-collector configure").Default("/usr/local/cloudcare/conf.json").String()
+	flagProvider               = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
 )
 
 func initCfg() error {
@@ -68,6 +72,7 @@ func initCfg() error {
 	cfg.Cfg.RemoteHost = *flagRemoteHost
 	cfg.Cfg.ScrapeMetricInterval = *flagScrapeMetricInterval
 	cfg.Cfg.ScrapeEnvInfoInterval = *flagScrapeEnvInfoInterval
+	cfg.Cfg.ScrapeFileInfoInterval = *flagScrapeFileInfoInterval
 	cfg.Cfg.EnableAll = *flagEnableAllCollectors
 
 	// unique-id 为必填参数
@@ -97,6 +102,7 @@ func initCfg() error {
 
 	cfg.Cfg.Port = *flagPort
 	cfg.Cfg.EnvCfgFile = *flagEnvCfg
+	cfg.Cfg.FileInfoCfgFile = *flagFileInfoCfg
 	cfg.Cfg.Provider = *flagProvider
 
 	cfg.Cfg.Collectors = collector.ListAllCollectors()
@@ -139,6 +145,9 @@ Golang Version: %s
 	// init envinfo configure
 	envinfo.OSQuerydPath = path.Join(*flagInstallDir, `osqueryd`)
 	envinfo.Init(cfg.Cfg.EnvCfgFile)
+	fileinfo.Init(cfg.Cfg.FileInfoCfgFile)
+
+	log.Infoln("start corsair")
 
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
@@ -155,10 +164,18 @@ Golang Version: %s
 			panic(err)
 		}
 
+		// file info 收集器
+		getURLFile := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *fileInfoPath)
+		postURLFile := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
+		if err := cloudcare.Start(postURLFile, getURLFile, cfg.Cfg.ScrapeFileInfoInterval); err != nil {
+			panic(err)
+		}
+
 		// TODO: 这些主动上报收集器, 并入集群模式时, 需要设计退出机制
 	}
 
 	http.Handle(*envInfoPath, handler.NewEnvInfoHandler())
+	http.Handle(*fileInfoPath, handler.NewFileInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
 	http.HandleFunc(*metaPath, func(w http.ResponseWriter, r *http.Request) {
 		j, err := json.Marshal(&cfg.Meta{
