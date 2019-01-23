@@ -76,7 +76,7 @@ func (s *Storage) applyConfig(remoteURL string) error {
 		HTTPClientConfig: rwCfg.HTTPClientConfig,
 	}
 
-	c, err := NewClient(0, s.logger, clientCfg)
+	c, err := NewClient(0, clientCfg)
 	if err != nil {
 		return err
 	}
