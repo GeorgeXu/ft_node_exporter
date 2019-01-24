@@ -101,7 +101,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	for _, t := range req.Timeseries {
 		t.Labels = append(t.Labels, &prompb.Label{
 			Name:  "cloud_asset_id",
-			Value: CorsairCloudAssetID,
+			Value: CorsairUploaderUID,
 		})
 		if CorsairHost != "" {
 			t.Labels = append(t.Labels, &prompb.Label{
@@ -139,7 +139,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	httpReq.Header.Set("Content-Type", contentType)
 	httpReq.Header.Set("X-Version", "corsair/"+git.Version)
 	httpReq.Header.Set("X-Team-ID", CorsairTeamID)
-	httpReq.Header.Set("X-Cloud-Asset-ID", CorsairCloudAssetID)
+	httpReq.Header.Set("X-Uploader-Uid", CorsairUploaderUID)
 	httpReq.Header.Set("X-Cloud-Asset-IP", CorsairHost)
 	httpReq.Header.Set("Date", date)
 	httpReq.Header.Set("Authorization", "corsair "+CorsairAK+":"+sig)

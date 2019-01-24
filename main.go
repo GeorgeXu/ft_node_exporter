@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"path"
 
 	"github.com/prometheus/common/log"
@@ -49,7 +50,7 @@ var (
 	flagScrapeEnvInfoInterval  = kingpin.Flag("scrape-env-info-interval", "frequency to upload env info data").Default("900").Int()
 	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval", "frequency to upload file info data").Default("900").Int()
 	flagTeamID                 = kingpin.Flag("team-id", "User ID").String()
-	flagCloudAssetID           = kingpin.Flag("cloud-asset-id", "cloud instance ID").String()
+	flagUploaderUID            = kingpin.Flag("uploader-uid", "cloud instance ID").String()
 	flagAK                     = kingpin.Flag("ak", `Access Key`).String()
 	flagSK                     = kingpin.Flag("sk", `Secret Key`).String()
 	flagPort                   = kingpin.Flag("port", `web listen port`).Default("9100").Int()
@@ -82,10 +83,10 @@ func initCfg() error {
 		cfg.Cfg.TeamID = *flagTeamID
 	}
 
-	if *flagCloudAssetID == "" {
+	if *flagUploaderUID == "" {
 		log.Fatal("invalid cloud assert id")
 	} else {
-		cfg.Cfg.CloudAssetID = *flagCloudAssetID
+		cfg.Cfg.UploaderUID = *flagUploaderUID
 	}
 
 	if *flagAK == "" {
@@ -178,10 +179,16 @@ Golang Version: %s
 	http.Handle(*fileInfoPath, handler.NewFileInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
 	http.HandleFunc(*metaPath, func(w http.ResponseWriter, r *http.Request) {
+		hostName, err := os.Hostname()
+		if err != nil {
+			log.Errorf("[error] %s, ignored", err.Error())
+		}
+
 		j, err := json.Marshal(&cfg.Meta{
-			CloudAssetID: cfg.Cfg.CloudAssetID,
-			Host:         cfg.Cfg.Host,
-			Provider:     cfg.Cfg.Provider,
+			UploaderUID: cfg.Cfg.UploaderUID,
+			Host:        cfg.Cfg.Host,
+			HostName:    hostName,
+			Provider:    cfg.Cfg.Provider,
 		})
 		if err != nil {
 			log.Errorf("[error] %s, ignored", err.Error())

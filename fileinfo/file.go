@@ -108,7 +108,7 @@ func getFilesInfo(ec *fileCollector, ch chan<- prometheus.Metric) error {
 func newEnvMetric(ec *fileCollector, envVal string) prometheus.Metric {
 	return prometheus.MustNewConstMetric(ec.entries, prometheus.GaugeValue, float64(-1), envVal,
 		// 此处追加两个 tag, 在 queue-manager 那边也会追加, 有重复, 待去掉
-		cloudcare.CorsairCloudAssetID, cloudcare.CorsairHost)
+		cloudcare.CorsairUploaderUID, cloudcare.CorsairHost)
 }
 
 type taritem struct {

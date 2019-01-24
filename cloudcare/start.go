@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	CorsairCloudAssetID   string
+	CorsairUploaderUID    string
 	CorsairTeamID         string
 	CorsairSK             string
 	CorsairAK             string
@@ -26,7 +26,7 @@ var (
 )
 
 func AddTags(s *model.Sample) {
-	s.Metric[model.LabelName(`cloud_asset_id`)] = model.LabelValue(CorsairCloudAssetID)
+	s.Metric[model.LabelName(`uploader_uid`)] = model.LabelValue(CorsairUploaderUID)
 	s.Metric[model.LabelName(`host`)] = model.LabelValue(CorsairHost)
 }
 

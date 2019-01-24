@@ -15,7 +15,7 @@ import (
 
 type Config struct {
 	TeamID                 string          `yaml:"team_id"`
-	CloudAssetID           string          `yaml:"cloud_asset_id"`
+	UploaderUID            string          `yaml:"uploader_uid"`
 	AK                     string          `yaml:"ak"`
 	SK                     string          `yaml:"sk"`
 	Port                   int             `yaml:"port"`
@@ -33,9 +33,10 @@ type Config struct {
 }
 
 type Meta struct {
-	CloudAssetID string `json:"cloud_asset_id"`
-	Host         string `json:"host"`
-	Provider     string `json:"provider"`
+	UploaderUID string `json:"uploader_uid"`
+	Host        string `json:"host"`
+	HostName    string `json:"host_name"`
+	Provider    string `json:"provider"`
 }
 
 var (
@@ -147,8 +148,8 @@ func initPromCfg(c *Config) error {
 
 	cloudcare.CorsairPort = c.Port
 
-	if c.CloudAssetID != "" {
-		cloudcare.CorsairCloudAssetID = c.CloudAssetID
+	if c.UploaderUID != "" {
+		cloudcare.CorsairUploaderUID = c.UploaderUID
 	}
 
 	if c.EnableAll == 1 {
