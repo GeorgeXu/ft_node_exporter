@@ -201,6 +201,7 @@ if [ "${arch}" = "x86_64" ]; then
   mv "${install_dir}"/{{.Name}}-linux-amd64/{{.Name}} "${install_dir}"/
   mv "${install_dir}"/{{.Name}}-linux-amd64/osqueryd "${install_dir}"/
   mv "${install_dir}"/{{.Name}}-linux-amd64/env.json "${install_dir}"/
+  mv "${install_dir}"/{{.Name}}-linux-amd64/fileinfo.json "${install_dir}"/
 else
   echo 'i386 not support, exit now!' | tee -a $install_log
   exit -1
