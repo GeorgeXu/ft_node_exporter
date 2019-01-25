@@ -100,7 +100,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
 	for _, t := range req.Timeseries {
 		t.Labels = append(t.Labels, &prompb.Label{
-			Name:  "cloud_asset_id",
+			Name:  TagUploaderUID,
 			Value: CorsairUploaderUID,
 		})
 		if CorsairHost != "" {

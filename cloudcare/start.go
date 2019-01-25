@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	TagCloudAssetID = `cloud_asset_id`
-	TagHost         = `host`
+	TagUploaderUID = `uploader_uid`
+	TagHost        = `host`
 )
 
 var (

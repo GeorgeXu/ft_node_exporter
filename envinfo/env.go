@@ -66,7 +66,7 @@ func Init(cfgFile string) {
 
 	for _, ec := range envCfgs.Envs {
 		if ec.Platform != "" && ec.Platform == runtime.GOOS {
-			ec.Tags = append(ec.Tags, cloudcare.TagCloudAssetID, cloudcare.TagHost) // 追加默认 tags
+			ec.Tags = append(ec.Tags, cloudcare.TagUploaderUID, cloudcare.TagHost) // 追加默认 tags
 			registerCollector(ec.SubSystem, ec.Enabled, NewEnvCollector, ec)
 		} else {
 			log.Printf("[info] skip collector %s(platform: %s)", ec.SubSystem, ec.Platform)

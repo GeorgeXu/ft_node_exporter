@@ -32,7 +32,7 @@ func NewFileCollector(cfg *fileInfoCfg) (Collector, error) {
 		cfg: cfg,
 		entries: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "info"),
-			"", []string{"fileinfo", cloudcare.TagCloudAssetID, cloudcare.TagHost}, nil)}, nil
+			"", []string{"fileinfo", cloudcare.TagUploaderUID, cloudcare.TagHost}, nil)}, nil
 }
 
 func Init(cfgpath string) {
