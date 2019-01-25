@@ -48,7 +48,7 @@ var (
 	flagRemoteHost             = kingpin.Flag("remote-host", `data bridge addr`).Default("http://kodo.cloudcare.com").String()
 	flagScrapeMetricInterval   = kingpin.Flag("scrape-metric-interval", "frequency to upload metric data").Default("60").Int()
 	flagScrapeEnvInfoInterval  = kingpin.Flag("scrape-env-info-interval", "frequency to upload env info data").Default("900").Int()
-	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval", "frequency to upload file info data").Default("900").Int()
+	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval", "frequency to upload file info data").Default("86400").Int()
 	flagTeamID                 = kingpin.Flag("team-id", "User ID").String()
 	flagUploaderUID            = kingpin.Flag("uploader-uid", "cloud instance ID").String()
 	flagAK                     = kingpin.Flag("ak", `Access Key`).String()
@@ -59,7 +59,7 @@ var (
 	flagEnableAllCollectors    = kingpin.Flag("enable-all", "enable all collectors").Default("0").Int()
 	flagInstallDir             = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
 	flagEnvCfg                 = kingpin.Flag("env-cfg", "env-collector configure").Default("/usr/local/cloudcare/env.json").String()
-	flagFileInfoCfg            = kingpin.Flag("fileinfo-cfg", "fileinfo-collector configure").Default("/usr/local/cloudcare/conf.json").String()
+	flagFileInfoCfg            = kingpin.Flag("fileinfo-cfg", "fileinfo-collector configure").Default("/usr/local/cloudcare/fileinfo.json").String()
 	flagProvider               = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
 )
 
