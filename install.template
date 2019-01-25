@@ -76,8 +76,8 @@ do
       shift
       ;;
 
-    --cloud-asset-id)
-      cloud_asset_id="$2"
+    --uploader-uid)
+      uploader_uid="$2"
       shift
       ;;
 
@@ -214,7 +214,7 @@ if [ $upgrade_flag -eq 0 ]; then
   printf "init corsair ... " | tee -a ${install_log}
   if ${binary} --init \
 		--team-id "${team_id}" \
-		--cloud-asset-id "${cloud_asset_id}" \
+		--uploader-uid "${uploader_uid}" \
 		--ak "${ak}" \
 		--sk "${sk}" \
 		--single-mode ${single_mode} \
@@ -229,7 +229,7 @@ if [ $upgrade_flag -eq 0 ]; then
     printf "ok\n" | tee -a ${install_log}
   else
     printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
-		echo ${binary} --init --team-id "${team_id}" --cloud-asset-id "${cloud_asset_id}" --ak "${ak}" --sk "${sk}" --single-mode ${single_mode} --enable-all ${enable_all} --cfg "${yml_cfg}" --remote-host "${remote_host}" --host "${host_ip}" --port "${corsair_port}" | tee -a ${install_log} | tee -a ${install_log}
+		echo ${binary} --init --team-id "${team_id}" --uploader-uid "${uploader_uid}" --ak "${ak}" --sk "${sk}" --single-mode ${single_mode} --enable-all ${enable_all} --cfg "${yml_cfg}" --remote-host "${remote_host}" --host "${host_ip}" --port "${corsair_port}" | tee -a ${install_log}
     exit 1
   fi
 else

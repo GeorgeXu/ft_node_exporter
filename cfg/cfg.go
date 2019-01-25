@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"time"
 
@@ -47,10 +48,12 @@ var (
 func LoadConfig(f string) error {
 	data, err := ioutil.ReadFile(f)
 	if err != nil {
+		log.Printf("[error] open %s failed: %s", f, err.Error())
 		return err
 	}
 
 	if err := yaml.Unmarshal(data, &Cfg); err != nil {
+		log.Printf("[error] yaml load %s failed: %s", f, err.Error())
 		return err
 	}
 

@@ -57,11 +57,11 @@ func Init(cfgFile string) {
 	var envCfgs envCfgs
 	j, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("[fatal] open %s failed: %s", cfgFile, err)
 	}
 
 	if err := json.Unmarshal(j, &envCfgs); err != nil {
-		log.Fatal(err)
+		log.Fatalf("[fatal] yaml load %s failed: %s", cfgFile, err)
 	}
 
 	for _, ec := range envCfgs.Envs {

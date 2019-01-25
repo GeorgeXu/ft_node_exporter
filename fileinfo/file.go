@@ -39,15 +39,14 @@ func Init(cfgpath string) {
 	var cfg fileInfoCfg
 	j, err := ioutil.ReadFile(cfgpath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("init file info failed: %s", cfgpath, err)
 	}
 
 	if err := json.Unmarshal(j, &cfg); err != nil {
-		log.Fatal(err)
+		log.Fatalf("json load file info failed: %s", cfgpath, err)
 	}
 
 	registerCollector("fileinfo", true, NewFileCollector, &cfg)
-
 }
 
 func (ec *fileCollector) Update(ch chan<- prometheus.Metric) error {

@@ -120,6 +120,7 @@ func initCfg() error {
 func main() {
 
 	log.AddFlags(kingpin.CommandLine)
+
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
