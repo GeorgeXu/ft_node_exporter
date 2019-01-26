@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -154,13 +155,20 @@ Golang Version: %s
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
 		getURLMetric := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *metricsPath)
+
+		log.Printf("[debug] metric url: %s", getURLMetric)
+
 		postURLMetric := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write")
+
 		if err := cloudcare.Start(postURLMetric, getURLMetric, int64(cfg.Cfg.ScrapeMetricInterval)); err != nil {
 			log.Fatalf("[fatal] %s", err)
 		}
 
 		// env info 收集器
 		getURLEnv := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *envInfoPath)
+
+		log.Printf("[debug] env-info url: %s", getURLEnv)
+
 		postURLEnv := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
 		if err := cloudcare.Start(postURLEnv, getURLEnv, int64(cfg.Cfg.ScrapeEnvInfoInterval)); err != nil {
 			log.Fatalf("[fatal] %s", err)
@@ -168,6 +176,9 @@ Golang Version: %s
 
 		// file info 收集器
 		getURLFile := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *fileInfoPath)
+
+		log.Printf("[debug] env-info url: %s", getURLFile)
+
 		postURLFile := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
 		if err := cloudcare.Start(postURLFile, getURLFile, int64(cfg.Cfg.ScrapeFileInfoInterval)); err != nil {
 			log.Fatalf("[fatal] %s", err)
@@ -201,9 +212,13 @@ Golang Version: %s
 	})
 
 	listenAddress := fmt.Sprintf("0.0.0.0:%d", cfg.Cfg.Port)
+	l, err := net.Listen(`tcp`, listenAddress)
+	if err != nil {
+		log.Fatalf("[fatal] %s", err.Error())
+	}
 
-	log.Printf("[info] Listening on %s", listenAddress)
-	if err := http.ListenAndServe(listenAddress, nil); err != nil {
+	defer l.Close()
+	if err := http.Serve(l, nil); err != nil {
 		log.Printf("[fatal]", err)
 	}
 }

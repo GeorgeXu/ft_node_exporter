@@ -14,24 +14,25 @@ import (
 )
 
 type Config struct {
-	TeamID                 string          `yaml:"team_id"`
-	UploaderUID            string          `yaml:"uploader_uid"`
-	AK                     string          `yaml:"ak"`
-	SK                     string          `yaml:"sk"`
-	Port                   int             `yaml:"port"`
-	Collectors             map[string]bool `yaml:"collectors"`
-	SingleMode             int             `yaml:"single_mode"`
-	Host                   string          `yaml:"host"`
-	ScrapeMetricInterval   int             `yaml:"scrap_metric_interval"`
-	ScrapeEnvInfoInterval  int             `yaml:"scrap_env_info_interval"`
-	ScrapeFileInfoInterval int             `yaml:"scrap_file_info_interval"`
-	RemoteHost             string          `yaml:"remote_host"`
-	EnableAll              int             `yaml:"enable_all"`
-	EnvCfgFile             string          `yaml:"env_cfg_file"`
-	FileInfoCfgFile        string          `yaml:"fileinfo_cfg_file"`
-	Provider               string          `yaml:"provider"`
+	TeamID          string `yaml:"team_id"`
+	UploaderUID     string `yaml:"uploader_uid"`
+	AK              string `yaml:"ak"`
+	SK              string `yaml:"sk"`
+	Port            int    `yaml:"port"`
+	SingleMode      int    `yaml:"single_mode"`
+	Host            string `yaml:"host"`
+	RemoteHost      string `yaml:"remote_host"`
+	EnableAll       int    `yaml:"enable_all"`
+	EnvCfgFile      string `yaml:"env_cfg_file"`
+	FileInfoCfgFile string `yaml:"fileinfo_cfg_file"`
+	Provider        string `yaml:"provider"`
 
-	QueueCfg map[string]int `yaml:"queue_cfg"`
+	ScrapeMetricInterval   int `yaml:"scrap_metric_interval"`
+	ScrapeEnvInfoInterval  int `yaml:"scrap_env_info_interval"`
+	ScrapeFileInfoInterval int `yaml:"scrap_file_info_interval"`
+
+	Collectors map[string]bool `yaml:"collectors"`
+	QueueCfg   map[string]int  `yaml:"queue_cfg"`
 }
 
 type Meta struct {
@@ -42,7 +43,14 @@ type Meta struct {
 }
 
 var (
-	Cfg       Config
+	Cfg = Config{
+		QueueCfg: map[string]int{
+			`batch_send_deadline`:  5,
+			`capacity`:             10000,
+			`max_retries`:          3,
+			`max_samples_per_send`: 100,
+		},
+	}
 	DecodedSK = ""
 )
 
