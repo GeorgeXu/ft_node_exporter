@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -19,8 +20,8 @@ import (
 	"github.com/Go-zh/net/context/ctxhttp"
 	"github.com/golang/protobuf/proto"
 	"github.com/klauspost/compress/snappy"
-	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/model"
+	"github.com/prometheus/node_exporter/cfg"
 	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/prometheus/prompb"
 
@@ -68,13 +69,7 @@ type recoverableError struct {
 	error
 }
 
-///  content  ---  上传的数据  body
-///  contentType ---- 上传数据 格式  如“application/json”
-///  dateStr  ----- header "Date"
-///  key  ----- header "X-Prometheus-Key"
-///  method ----  http request method ,eg PUT，GET，POST，HEAD，DELETE
-///  skVal  -----  Access key secret
-func generateAuthorization(content []byte, contentType string, dateStr string, key string, method string, skVal string) string {
+func calcSig(content []byte, contentType string, dateStr string, key string, method string, skVal string) string {
 	h := md5.New()
 	h.Write(content)
 
@@ -101,48 +96,47 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	for _, t := range req.Timeseries {
 		t.Labels = append(t.Labels, &prompb.Label{
 			Name:  TagUploaderUID,
-			Value: CorsairUploaderUID,
+			Value: cfg.Cfg.UploaderUID,
 		})
-		if CorsairHost != "" {
-			t.Labels = append(t.Labels, &prompb.Label{
-				Name:  "host",
-				Value: CorsairHost,
-			})
-		}
+
+		t.Labels = append(t.Labels, &prompb.Label{
+			Name:  "host",
+			Value: cfg.Cfg.Host,
+		})
 	}
 
 	data, err := proto.Marshal(req)
 	if err != nil {
-		log.Errorf(err.Error())
+		log.Printf("[error] %s", err.Error())
 		return err
 	}
 
 	compressed := snappy.Encode(nil, data)
 	httpReq, err := http.NewRequest("POST", c.url.String(), bytes.NewReader(compressed))
 	if err != nil {
-		// Errors from NewRequest are from unparseable URLs, so are not
-		// recoverable.
-		log.Errorf(err.Error())
+		// Errors from NewRequest are from unparseable URLs, so are not recoverable.
+		log.Printf("[error] %s", err.Error())
 		return err
 	}
 
-	log.Debugf("snappy ratio: %d/%d", len(compressed), len(data))
+	log.Printf("[debug] snappy ratio: %d/%d=%f%%",
+		len(compressed), len(data), (1.0-float64(len(compressed))/float64(len(data)))*100.0)
 
 	contentType := "application/x-protobuf"
 	contentEncode := "snappy"
 	date := time.Now().UTC().Format(http.TimeFormat)
 
-	sig := generateAuthorization(compressed, contentType,
-		date, CorsairTeamID, http.MethodPost, CorsairSK)
+	sig := calcSig(compressed, contentType,
+		date, cfg.Cfg.TeamID, http.MethodPost, cfg.DecodedSK)
 
 	httpReq.Header.Add("Content-Encoding", contentEncode)
 	httpReq.Header.Set("Content-Type", contentType)
 	httpReq.Header.Set("X-Version", "corsair/"+git.Version)
-	httpReq.Header.Set("X-Team-Id", CorsairTeamID)
-	httpReq.Header.Set("X-Uploader-Uid", CorsairUploaderUID)
-	httpReq.Header.Set("X-Uploader-Ip", CorsairHost)
+	httpReq.Header.Set("X-Team-Id", cfg.Cfg.TeamID)
+	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
+	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
 	httpReq.Header.Set("Date", date)
-	httpReq.Header.Set("Authorization", "corsair "+CorsairAK+":"+sig)
+	httpReq.Header.Set("Authorization", "corsair "+cfg.Cfg.AK+":"+sig)
 	httpReq = httpReq.WithContext(ctx)
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
@@ -169,7 +163,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 				// pass
 			} else {
 				if msg.Rejected {
-					log.Fatalf("rejected by kodo: %s", msg.Error)
+					log.Printf("[fatal] rejected by kodo: %s", msg.Error)
 					os.Exit(-1)
 				}
 			}

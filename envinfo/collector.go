@@ -3,12 +3,12 @@ package envinfo
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 	"os/exec"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/log"
 )
 
 const namespace = "envinfo"
@@ -90,7 +90,7 @@ func (c EnvInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	wg := sync.WaitGroup{}
 	wg.Add(len(c.Collectors))
 
-	log.Debugf("envinfo try collect...")
+	// log.Printf("[debug] envinfo try collect...")
 
 	for name, _c := range c.Collectors {
 		go func(name string, ec Collector) {
@@ -107,7 +107,7 @@ func execute(name string, c Collector, ch chan<- prometheus.Metric) {
 	duration := time.Since(begin)
 
 	if err != nil {
-		log.Errorf("ERROR: %s collector failed after %fs: %s", name, duration.Seconds(), err)
+		log.Printf("[error] collector %s failed after %fs: %s", name, duration.Seconds(), err)
 	}
 }
 
@@ -115,29 +115,24 @@ func doCat(path string) (string, error) {
 
 	cmd := exec.Command(`cat`, []string{path}...)
 
-	// log.Debugf("cat: %s", path)
-
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
 
 	res := base64.RawURLEncoding.EncodeToString(out)
-	log.Debugf("cat.b64: %s", res)
+
 	return res, nil
 }
 
 func doQuery(sql string) (string, error) {
 	cmd := exec.Command(OSQuerydPath, []string{`-S`, `--json`, sql}...)
 
-	// log.Debugf("osquery: %s", sql)
-
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
 
 	res := base64.RawURLEncoding.EncodeToString(out)
-	log.Debugf("osquery.b64: %s", res)
 	return res, nil
 }

@@ -2,12 +2,12 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"sort"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/node_exporter/collector"
 )
@@ -35,7 +35,7 @@ func NewMetricHandler(includeExporterMetrics bool) *metricHandler {
 		)
 	}
 	if ih, err := h.innerHandler(); err != nil {
-		log.Fatalf("Couldn't create metrics handler: %s", err)
+		log.Printf("[error] Couldn't create metrics handler: %s", err)
 	} else {
 		h.unfilteredHandler = ih
 	}
@@ -45,7 +45,6 @@ func NewMetricHandler(includeExporterMetrics bool) *metricHandler {
 // ServeHTTP implements http.Handler.
 func (h *metricHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters := r.URL.Query()["collect[]"]
-	log.Debugln("collect query:", filters)
 
 	if len(filters) == 0 {
 		// No filters, use the prepared unfiltered handler.
@@ -55,7 +54,7 @@ func (h *metricHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// To serve filtered metrics, we create a filtering handler on the fly.
 	filteredHandler, err := h.innerHandler(filters...)
 	if err != nil {
-		log.Warnln("Couldn't create filtered metrics handler:", err)
+		log.Printf("[warn] Couldn't create filtered metrics handler:", err)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf("Couldn't create filtered metrics handler: %s", err)))
 		return
@@ -83,10 +82,10 @@ func (h *metricHandler) innerHandler(filters ...string) (http.Handler, error) {
 		}
 		sort.Strings(collectors)
 
-		log.Infof("Enabled collectors(%d):", len(collectors))
+		log.Printf("[info] Enabled collectors(%d):", len(collectors))
 
 		for _, n := range collectors {
-			log.Infof(" - %s", n)
+			log.Printf("[info] - %s", n)
 		}
 	}
 
@@ -99,13 +98,12 @@ func (h *metricHandler) innerHandler(filters ...string) (http.Handler, error) {
 	handler := promhttp.HandlerFor(
 		prometheus.Gatherers{h.exporterMetricsRegistry, r},
 		promhttp.HandlerOpts{
-			ErrorLog:      log.NewErrorLogger(),
 			ErrorHandling: promhttp.ContinueOnError,
 		},
 	)
 
 	if h.includeExporterMetrics {
-		log.Debugln("promhttp.InstrumentMetricHandler")
+		log.Println("promhttp.InstrumentMetricHandler")
 		// Note that we have to use h.exporterMetricsRegistry here to
 		// use the same promhttp metrics for all expositions.
 

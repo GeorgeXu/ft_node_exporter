@@ -16,12 +16,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"path"
 
-	"github.com/prometheus/common/log"
 	"github.com/prometheus/node_exporter/cfg"
 	"github.com/prometheus/node_exporter/cloudcare"
 	"github.com/prometheus/node_exporter/collector"
@@ -78,25 +78,25 @@ func initCfg() error {
 
 	// unique-id 为必填参数
 	if *flagTeamID == "" {
-		log.Fatal("invalid team-id")
+		log.Println("[fatal] invalid team-id")
 	} else {
 		cfg.Cfg.TeamID = *flagTeamID
 	}
 
 	if *flagUploaderUID == "" {
-		log.Fatal("invalid cloud assert id")
+		log.Println("[fatal] invalid uploader-uid")
 	} else {
 		cfg.Cfg.UploaderUID = *flagUploaderUID
 	}
 
 	if *flagAK == "" {
-		log.Fatal("invalid ak")
+		log.Println("[fatal] invalid ak")
 	} else {
 		cfg.Cfg.AK = *flagAK
 	}
 
 	if *flagSK == "" {
-		log.Fatal("invalid sk")
+		log.Println("[fatal] invalid sk")
 	} else {
 		cfg.Cfg.SK = cfg.XorEncode(*flagSK)
 	}
@@ -119,7 +119,7 @@ func initCfg() error {
 
 func main() {
 
-	log.AddFlags(kingpin.CommandLine)
+	log.SetFlags(log.Llongfile | log.LstdFlags)
 
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
@@ -149,28 +149,28 @@ Golang Version: %s
 	envinfo.Init(cfg.Cfg.EnvCfgFile)
 	fileinfo.Init(cfg.Cfg.FileInfoCfgFile)
 
-	log.Infoln("start corsair")
+	log.Println("[info] start corsair...")
 
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
 		getURLMetric := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *metricsPath)
 		postURLMetric := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write")
-		if err := cloudcare.Start(postURLMetric, getURLMetric, cfg.Cfg.ScrapeMetricInterval); err != nil {
-			panic(err)
+		if err := cloudcare.Start(postURLMetric, getURLMetric, int64(cfg.Cfg.ScrapeMetricInterval)); err != nil {
+			log.Fatalf("[fatal] %s", err)
 		}
 
 		// env info 收集器
 		getURLEnv := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *envInfoPath)
 		postURLEnv := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
-		if err := cloudcare.Start(postURLEnv, getURLEnv, cfg.Cfg.ScrapeEnvInfoInterval); err != nil {
-			panic(err)
+		if err := cloudcare.Start(postURLEnv, getURLEnv, int64(cfg.Cfg.ScrapeEnvInfoInterval)); err != nil {
+			log.Fatalf("[fatal] %s", err)
 		}
 
 		// file info 收集器
 		getURLFile := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *fileInfoPath)
 		postURLFile := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
-		if err := cloudcare.Start(postURLFile, getURLFile, cfg.Cfg.ScrapeFileInfoInterval); err != nil {
-			panic(err)
+		if err := cloudcare.Start(postURLFile, getURLFile, int64(cfg.Cfg.ScrapeFileInfoInterval)); err != nil {
+			log.Fatalf("[fatal] %s", err)
 		}
 
 		// TODO: 这些主动上报收集器, 并入集群模式时, 需要设计退出机制
@@ -182,7 +182,7 @@ Golang Version: %s
 	http.HandleFunc(*metaPath, func(w http.ResponseWriter, r *http.Request) {
 		hostName, err := os.Hostname()
 		if err != nil {
-			log.Errorf("[error] %s, ignored", err.Error())
+			log.Printf("[error] %s, ignored", err.Error())
 		}
 
 		j, err := json.Marshal(&cfg.Meta{
@@ -191,8 +191,9 @@ Golang Version: %s
 			HostName:    hostName,
 			Provider:    cfg.Cfg.Provider,
 		})
+
 		if err != nil {
-			log.Errorf("[error] %s, ignored", err.Error())
+			log.Printf("[error] %s, ignored", err.Error())
 			fmt.Fprintf(w, err.Error())
 		} else {
 			fmt.Fprintf(w, string(j))
@@ -201,8 +202,8 @@ Golang Version: %s
 
 	listenAddress := fmt.Sprintf("0.0.0.0:%d", cfg.Cfg.Port)
 
-	log.Infoln("Listening on", listenAddress)
+	log.Printf("[info] Listening on %s", listenAddress)
 	if err := http.ListenAndServe(listenAddress, nil); err != nil {
-		log.Fatal(err)
+		log.Printf("[fatal]", err)
 	}
 }

@@ -10,7 +10,6 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/prometheus/node_exporter/cloudcare"
 	"github.com/prometheus/node_exporter/collector"
 )
 
@@ -30,7 +29,9 @@ type Config struct {
 	EnableAll              int             `yaml:"enable_all"`
 	EnvCfgFile             string          `yaml:"env_cfg_file"`
 	FileInfoCfgFile        string          `yaml:"fileinfo_cfg_file"`
-	Provider               string          `json:"provider"`
+	Provider               string          `yaml:"provider"`
+
+	QueueCfg map[string]int `yaml:"queue_cfg"`
 }
 
 type Meta struct {
@@ -41,7 +42,8 @@ type Meta struct {
 }
 
 var (
-	Cfg Config
+	Cfg       Config
+	DecodedSK = ""
 )
 
 // 导入 @f 中的配置
@@ -57,9 +59,26 @@ func LoadConfig(f string) error {
 		return err
 	}
 
-	if err := initPromCfg(&Cfg); err != nil {
-		return err
+	if Cfg.Host == "" {
+		Cfg.Host = "default"
 	}
+
+	if Cfg.SK != "" {
+		DecodedSK = string(xorDecode(Cfg.SK))
+	}
+
+	if Cfg.EnableAll == 1 {
+		// 开启所有收集器
+		for k, _ := range Cfg.Collectors {
+			collector.SetCollector(k, true)
+		}
+	} else {
+		// 将配置中的开关设置到 collector 模块中
+		for k, v := range Cfg.Collectors {
+			collector.SetCollector(k, v)
+		}
+	}
+
 	return nil
 }
 
@@ -131,41 +150,4 @@ func xorDecode(endata string) []byte {
 		dedata.WriteByte(data[index] ^ xorkeys[index])
 	}
 	return dedata.Bytes()[1 : 1+length]
-}
-
-// 从现有配置中初始化 prom 的配置
-func initPromCfg(c *Config) error {
-
-	if c.Host != "" {
-		cloudcare.CorsairHost = c.Host
-	}
-	if c.TeamID != "" {
-		cloudcare.CorsairTeamID = c.TeamID
-	}
-	if c.AK != "" {
-		cloudcare.CorsairAK = c.AK
-	}
-	if c.SK != "" {
-		cloudcare.CorsairSK = string(xorDecode(c.SK))
-	}
-
-	cloudcare.CorsairPort = c.Port
-
-	if c.UploaderUID != "" {
-		cloudcare.CorsairUploaderUID = c.UploaderUID
-	}
-
-	if c.EnableAll == 1 {
-		// 开启所有收集器
-		for k, _ := range c.Collectors {
-			collector.SetCollector(k, true)
-		}
-	} else {
-		// 将配置中的开关设置到 collector 模块中
-		for k, v := range c.Collectors {
-			collector.SetCollector(k, v)
-		}
-	}
-
-	return nil
 }

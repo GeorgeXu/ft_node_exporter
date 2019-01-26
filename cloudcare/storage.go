@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-kit/kit/log"
 	config_util "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
@@ -14,8 +13,7 @@ import (
 )
 
 type Storage struct {
-	logger log.Logger
-	mtx    sync.RWMutex
+	mtx sync.RWMutex
 
 	// For writes
 	queues []*QueueManager
@@ -42,30 +40,15 @@ func (s *Storage) Add(l labels.Labels, t int64, v float64) (uint64, error) {
 }
 
 // NewStorage returns a remote.Storage.
-func NewStorage(l log.Logger, stCallback func(), flushDeadline time.Duration) *Storage {
-	if l == nil {
-		l = log.NewNopLogger()
-	}
-	return &Storage{
-		logger: l,
-		//localStartTimeCallback: stCallback,
-		flushDeadline: flushDeadline,
-	}
-}
+func NewStorage(remoteUrl string, flushDeadline time.Duration) (*Storage, error) {
 
-// applyConfig updates the state as the new config requires.
-func (s *Storage) applyConfig(remoteURL string) error {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
-
-	newQueues := []*QueueManager{}
-
-	u, err := url.Parse(remoteURL)
+	u, err := url.Parse(remoteUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	rwCfg := config.DefaultRemoteWriteConfig
+
 	rwCfg.URL = &config_util.URL{
 		URL: u,
 	}
@@ -78,31 +61,22 @@ func (s *Storage) applyConfig(remoteURL string) error {
 
 	c, err := NewClient(0, clientCfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	var conf config.Config
-
-	newQueues = append(newQueues, newQueueManager(
-		s.logger,
-		rwCfg.QueueConfig,
-		conf.GlobalConfig.ExternalLabels,
-		rwCfg.WriteRelabelConfigs,
-		c,
-		s.flushDeadline,
-	))
-
-	for _, q := range s.queues {
-		q.Stop()
+	qm := []*QueueManager{
+		newQueueManager(c, flushDeadline),
 	}
 
-	s.queues = newQueues
-
-	for _, q := range s.queues {
+	for _, q := range qm {
 		q.Start()
 	}
 
-	return nil
+	return &Storage{
+		flushDeadline: flushDeadline,
+		mtx:           sync.RWMutex{},
+		queues:        qm,
+	}, nil
 }
 
 // Close the background processing of the storage queues.

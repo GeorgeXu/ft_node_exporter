@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/node_exporter/cfg"
 	"github.com/prometheus/node_exporter/cloudcare"
 )
 
@@ -118,7 +119,7 @@ func catUpdate(ec *envCollector, ch chan<- prometheus.Metric) error {
 func newEnvMetric(ec *envCollector, envVal string) prometheus.Metric {
 	return prometheus.MustNewConstMetric(ec.entries, prometheus.GaugeValue, float64(-1), envVal,
 		// 此处追加两个 tag, 在 queue-manager 那边也会追加, 有重复, 待去掉
-		cloudcare.CorsairUploaderUID, cloudcare.CorsairHost)
+		cfg.Cfg.UploaderUID, cfg.Cfg.Host)
 }
 
 func osqueryUpdate(ec *envCollector, ch chan<- prometheus.Metric) error {
