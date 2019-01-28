@@ -16,6 +16,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -30,6 +31,7 @@ import (
 	"github.com/prometheus/node_exporter/fileinfo"
 	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/node_exporter/handler"
+	"github.com/satori/go.uuid"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -51,13 +53,13 @@ var (
 	flagScrapeEnvInfoInterval  = kingpin.Flag("scrape-env-info-interval", "frequency to upload env info data").Default("900").Int()
 	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval", "frequency to upload file info data").Default("86400").Int()
 	flagTeamID                 = kingpin.Flag("team-id", "User ID").String()
-	flagUploaderUID            = kingpin.Flag("uploader-uid", "cloud instance ID").String()
 	flagAK                     = kingpin.Flag("ak", `Access Key`).String()
 	flagSK                     = kingpin.Flag("sk", `Secret Key`).String()
 	flagPort                   = kingpin.Flag("port", `web listen port`).Default("9100").Int()
-	flagCfgFile                = kingpin.Flag("cfg", `configure file`).Default("cfg.yml").String()
+	flagCfgFile                = kingpin.Flag("cfg", `configure file`).Default("/usr/local/cloudcare/corsair.yml").String()
 	flagVersionInfo            = kingpin.Flag("version", "show version info").Bool()
 	flagEnableAllCollectors    = kingpin.Flag("enable-all", "enable all collectors").Default("0").Int()
+	flagCheck                  = kingpin.Flag("check", "check if ok").Default("0").Int()
 	flagInstallDir             = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
 	flagEnvCfg                 = kingpin.Flag("env-cfg", "env-collector configure").Default("/usr/local/cloudcare/env.json").String()
 	flagFileInfoCfg            = kingpin.Flag("fileinfo-cfg", "fileinfo-collector configure").Default("/usr/local/cloudcare/fileinfo.json").String()
@@ -84,11 +86,13 @@ func initCfg() error {
 		cfg.Cfg.TeamID = *flagTeamID
 	}
 
-	if *flagUploaderUID == "" {
-		log.Println("[fatal] invalid uploader-uid")
-	} else {
-		cfg.Cfg.UploaderUID = *flagUploaderUID
+	// 客户端自行生成 ID, 而不是 kodo 下发
+	uid, err := uuid.NewV4()
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	cfg.Cfg.UploaderUID = fmt.Sprintf("uid-%s", uid.String())
 
 	if *flagAK == "" {
 		log.Println("[fatal] invalid ak")
@@ -118,9 +122,46 @@ func initCfg() error {
 	return cfg.DumpConfig(*flagCfgFile)
 }
 
+func probeCheck() error {
+	url := fmt.Sprintf("%s/v1/probe/check?team_id=%s&probe=corsair&upload_uid=%s",
+		cfg.Cfg.RemoteHost, cfg.Cfg.TeamID, cfg.Cfg.UploaderUID)
+
+	log.Printf("[debug] probe check url: %s", url)
+
+	resp, err := http.Get(url)
+	if err != nil { // 可能网络不通
+		return err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if resp.StatusCode != 200 {
+		log.Fatalf("[fatal] check failed: %s", string(body))
+	}
+
+	log.Printf("[debug] probe check resp: %s", string(body))
+
+	msg := map[string]string{}
+	if err := json.Unmarshal(body, &msg); err != nil {
+		log.Fatal(err)
+	}
+
+	if msg[`error`] != "" {
+		return fmt.Errorf(msg[`error`])
+	}
+
+	return nil
+}
+
 func main() {
 
-	log.SetFlags(log.Llongfile | log.LstdFlags)
+	//log.SetFlags(log.Llongfile | log.LstdFlags)
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
@@ -138,12 +179,19 @@ Golang Version: %s
 		_ = initCfg()
 		return
 	} else if *flagUpgrade {
-		// TODO
+		// 只是更新二进制, 不改变之前的配置
 		return
 	}
 
 	cfg.LoadConfig(*flagCfgFile)
 	cfg.DumpConfig(*flagCfgFile) // load 过程中可能会修改 cfg.Cfg, 需重新写入
+
+	if *flagCheck != 0 {
+		if err := probeCheck(); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 
 	// init envinfo configure
 	envinfo.OSQuerydPath = path.Join(*flagInstallDir, `osqueryd`)

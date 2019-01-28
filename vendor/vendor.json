@@ -1047,6 +1047,12 @@
 			"revisionTime": "2018-11-27T06:38:13Z"
 		},
 		{
+			"checksumSHA1": "Tutue3nEgM/87jitUcYv6ODwyNE=",
+			"path": "github.com/satori/go.uuid",
+			"revision": "b2ce2384e17bbe0c6d34077efa39dbab3e09123b",
+			"revisionTime": "2018-10-28T12:50:25Z"
+		},
+		{
 			"checksumSHA1": "YjhDOmq6sEghGST0PAiyA+8EAT4=",
 			"path": "github.com/sirupsen/logrus",
 			"revision": "ad15b42461921f1fb3529b058c6786c6a45d5162",
