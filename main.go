@@ -49,9 +49,9 @@ var (
 	flagUpgrade                = kingpin.Flag("upgrade", ``).Bool()
 	flagHost                   = kingpin.Flag("host", `eg. ip addr`).String()
 	flagRemoteHost             = kingpin.Flag("remote-host", `data bridge addr`).Default("http://kodo.cloudcare.com").String()
-	flagScrapeMetricInterval   = kingpin.Flag("scrape-metric-interval", "frequency to upload metric data").Default("60").Int()
-	flagScrapeEnvInfoInterval  = kingpin.Flag("scrape-env-info-interval", "frequency to upload env info data").Default("900").Int()
-	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval", "frequency to upload file info data").Default("86400").Int()
+	flagScrapeMetricInterval   = kingpin.Flag("scrape-metric-interval", "frequency to upload metric data(ms)").Default("60000").Int()
+	flagScrapeEnvInfoInterval  = kingpin.Flag("scrape-env-info-interval", "frequency to upload env info data(ms)").Default("900000").Int()
+	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval", "frequency to upload file info data(ms)").Default("86400000").Int()
 	flagTeamID                 = kingpin.Flag("team-id", "User ID").String()
 	flagAK                     = kingpin.Flag("ak", `Access Key`).String()
 	flagSK                     = kingpin.Flag("sk", `Secret Key`).String()
@@ -123,10 +123,8 @@ func initCfg() error {
 }
 
 func probeCheck() error {
-	url := fmt.Sprintf("%s/v1/probe/check?team_id=%s&probe=corsair&upload_uid=%s",
+	url := fmt.Sprintf("%s/v1/probe/check?team_id=%s&probe=corsair&uploader_uid=%s",
 		cfg.Cfg.RemoteHost, cfg.Cfg.TeamID, cfg.Cfg.UploaderUID)
-
-	log.Printf("[debug] probe check url: %s", url)
 
 	resp, err := http.Get(url)
 	if err != nil { // 可能网络不通
@@ -143,8 +141,6 @@ func probeCheck() error {
 	if resp.StatusCode != 200 {
 		log.Fatalf("[fatal] check failed: %s", string(body))
 	}
-
-	log.Printf("[debug] probe check resp: %s", string(body))
 
 	msg := map[string]string{}
 	if err := json.Unmarshal(body, &msg); err != nil {
@@ -187,8 +183,9 @@ Golang Version: %s
 	cfg.DumpConfig(*flagCfgFile) // load 过程中可能会修改 cfg.Cfg, 需重新写入
 
 	if *flagCheck != 0 {
+		log.Println("[info] corsair checking...")
 		if err := probeCheck(); err != nil {
-			log.Fatal(err)
+			log.Fatalf("[fatal] %s, exit now.", err.Error())
 		}
 		return
 	}

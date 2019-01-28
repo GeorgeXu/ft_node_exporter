@@ -136,6 +136,7 @@ done
 # 检查这些命令是否支持
 ########################################################
 commands=(
+curl
 netstat
 wget
 tar
@@ -143,7 +144,7 @@ tar
 
 for c in "${commands[@]}"; do
   if ! hash $c; then
-    printf "$c not found, exit.\n" $c | tee -a $install_log
+    printf "`$c` not found, exit.\n" $c | tee -a $install_log
     exit -1
   fi
 done
@@ -247,10 +248,11 @@ fi
 printf "checking corsair ...\n" | tee -a ${install_log}
 
 # 先 check 一下
-if [ ${binary} --cfg "${yml_cfg}"  --check ]; then
+if `${binary} --cfg "${yml_cfg}"  --check 1`; then
     printf "checking pass\n" | tee -a ${install_log}
 else
     printf "checking failed, exit now.\n" | tee -a ${install_log}
+		exit -1
 fi
 
 printf "starting corsair ...\n" | tee -a ${install_log}
