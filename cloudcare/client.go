@@ -135,6 +135,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	httpReq.Header.Set("X-Team-Id", cfg.Cfg.TeamID)
 	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
 	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
+	httpReq.Header.Set("X-Hostname", HostName)
 	httpReq.Header.Set("Date", date)
 	httpReq.Header.Set("Authorization", "corsair "+cfg.Cfg.AK+":"+sig)
 	httpReq = httpReq.WithContext(ctx)

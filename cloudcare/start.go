@@ -3,6 +3,8 @@ package cloudcare
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -16,13 +18,17 @@ const (
 )
 
 var (
-	//CorsairTeamID         string
-	//CorsairSK             string
-	//CorsairAK             string
-	//CorsairHost           string = `default`
-	//CorsairPort           int
-	CorsairScrapeInterval int
+	HostName string
 )
+
+func init() {
+
+	var err error
+	HostName, err = os.Hostname()
+	if err != nil {
+		log.Printf("[error] %s, ignored", err.Error())
+	}
+}
 
 func AddTags(s *model.Sample) {
 	s.Metric[model.LabelName(TagUploaderUID)] = model.LabelValue(cfg.Cfg.UploaderUID)

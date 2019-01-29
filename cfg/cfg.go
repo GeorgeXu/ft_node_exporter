@@ -50,7 +50,18 @@ var (
 			`max_retries`:          3,
 			`max_samples_per_send`: 100,
 		},
+		Host:                   `default`,
+		RemoteHost:             `http://kodo.cloudcare.com`,
+		SingleMode:             1,
+		EnableAll:              1,
+		Port:                   9100,
+		EnvCfgFile:             `/usr/local/cloudcare/env.json`,
+		FileInfoCfgFile:        `/usr/local/cloudcare/fileinfo.json`,
+		ScrapeMetricInterval:   60000,
+		ScrapeEnvInfoInterval:  900000,
+		ScrapeFileInfoInterval: 86400000,
 	}
+
 	DecodedSK = ""
 )
 

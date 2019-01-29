@@ -44,26 +44,35 @@ var (
 
 	disableExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).").Bool()
 
-	flagSingleMode             = kingpin.Flag("single-mode", "run as single node").Default("0").Int()
-	flagInit                   = kingpin.Flag("init", `init collector`).Bool()
-	flagUpgrade                = kingpin.Flag("upgrade", ``).Bool()
-	flagHost                   = kingpin.Flag("host", `eg. ip addr`).String()
-	flagRemoteHost             = kingpin.Flag("remote-host", `data bridge addr`).Default("http://kodo.cloudcare.com").String()
-	flagScrapeMetricInterval   = kingpin.Flag("scrape-metric-interval", "frequency to upload metric data(ms)").Default("60000").Int()
-	flagScrapeEnvInfoInterval  = kingpin.Flag("scrape-env-info-interval", "frequency to upload env info data(ms)").Default("900000").Int()
-	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval", "frequency to upload file info data(ms)").Default("86400000").Int()
-	flagTeamID                 = kingpin.Flag("team-id", "User ID").String()
-	flagAK                     = kingpin.Flag("ak", `Access Key`).String()
-	flagSK                     = kingpin.Flag("sk", `Secret Key`).String()
-	flagPort                   = kingpin.Flag("port", `web listen port`).Default("9100").Int()
-	flagCfgFile                = kingpin.Flag("cfg", `configure file`).Default("/usr/local/cloudcare/corsair.yml").String()
-	flagVersionInfo            = kingpin.Flag("version", "show version info").Bool()
-	flagEnableAllCollectors    = kingpin.Flag("enable-all", "enable all collectors").Default("0").Int()
-	flagCheck                  = kingpin.Flag("check", "check if ok").Default("0").Int()
-	flagInstallDir             = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
-	flagEnvCfg                 = kingpin.Flag("env-cfg", "env-collector configure").Default("/usr/local/cloudcare/env.json").String()
-	flagFileInfoCfg            = kingpin.Flag("fileinfo-cfg", "fileinfo-collector configure").Default("/usr/local/cloudcare/fileinfo.json").String()
-	flagProvider               = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
+	flagSingleMode = kingpin.Flag("single-mode", "run as single node").Default(fmt.Sprintf("%d", cfg.Cfg.SingleMode)).Int()
+	flagInit       = kingpin.Flag("init", `init collector`).Bool()
+	flagUpgrade    = kingpin.Flag("upgrade", ``).Bool()
+	flagHost       = kingpin.Flag("host", `eg. ip addr`).Default(cfg.Cfg.Host).String()
+	flagRemoteHost = kingpin.Flag("remote-host", `data bridge addr`).Default(cfg.Cfg.RemoteHost).String()
+
+	flagScrapeMetricInterval = kingpin.Flag("scrape-metric-interval",
+		"frequency to upload metric data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeMetricInterval)).Int()
+	flagScrapeEnvInfoInterval = kingpin.Flag("scrape-env-info-interval",
+		"frequency to upload env info data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeEnvInfoInterval)).Int()
+	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval",
+		"frequency to upload file info data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeFileInfoInterval)).Int()
+
+	flagPort = kingpin.Flag("port", `web listen port`).Default(fmt.Sprintf("%d", cfg.Cfg.Port)).Int()
+
+	flagEnvCfg      = kingpin.Flag("env-cfg", "env-collector configure").Default(cfg.Cfg.EnvCfgFile).String()
+	flagFileInfoCfg = kingpin.Flag("fileinfo-cfg", "fileinfo-collector configure").Default(cfg.Cfg.FileInfoCfgFile).String()
+
+	flagEnableAllCollectors = kingpin.Flag("enable-all", "enable all collectors").Default(fmt.Sprintf("%d", cfg.Cfg.EnableAll)).Int()
+
+	flagTeamID      = kingpin.Flag("team-id", "User ID").String()
+	flagAK          = kingpin.Flag("ak", `Access Key`).String()
+	flagSK          = kingpin.Flag("sk", `Secret Key`).String()
+	flagCfgFile     = kingpin.Flag("cfg", `configure file`).Default("/usr/local/cloudcare/corsair.yml").String()
+	flagVersionInfo = kingpin.Flag("version", "show version info").Bool()
+	flagCheck       = kingpin.Flag("check", "check if ok").Default("0").Int()
+	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
+
+	flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
 )
 
 func initCfg() error {
@@ -183,7 +192,6 @@ Golang Version: %s
 	cfg.DumpConfig(*flagCfgFile) // load 过程中可能会修改 cfg.Cfg, 需重新写入
 
 	if *flagCheck != 0 {
-		log.Println("[info] corsair checking...")
 		if err := probeCheck(); err != nil {
 			log.Fatalf("[fatal] %s, exit now.", err.Error())
 		}
@@ -239,6 +247,8 @@ Golang Version: %s
 		hostName, err := os.Hostname()
 		if err != nil {
 			log.Printf("[error] %s, ignored", err.Error())
+		} else {
+			cloudcare.HostName = hostName // 每次该接口被调用时, 都尝试更新一下全局的 hostname(在运行期间可能变更)
 		}
 
 		j, err := json.Marshal(&cfg.Meta{
@@ -252,6 +262,9 @@ Golang Version: %s
 			log.Printf("[error] %s, ignored", err.Error())
 			fmt.Fprintf(w, err.Error())
 		} else {
+
+			w.Header().Set(`Content-Type`, `application/json`)
+			w.Header().Set(`Content-Length`, fmt.Sprintf("%d", len(j)))
 			fmt.Fprintf(w, string(j))
 		}
 	})
