@@ -32,7 +32,6 @@ func init() {
 
 func AddTags(s *model.Sample) {
 	s.Metric[model.LabelName(TagUploaderUID)] = model.LabelValue(cfg.Cfg.UploaderUID)
-	s.Metric[model.LabelName(TagHost)] = model.LabelValue(cfg.Cfg.Host)
 }
 
 func Start(remoteHost string, scrapehost string, interval int64) error {

@@ -93,18 +93,6 @@ var (
 
 func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
-	for _, t := range req.Timeseries {
-		t.Labels = append(t.Labels, &prompb.Label{
-			Name:  TagUploaderUID,
-			Value: cfg.Cfg.UploaderUID,
-		})
-
-		t.Labels = append(t.Labels, &prompb.Label{
-			Name:  "host",
-			Value: cfg.Cfg.Host,
-		})
-	}
-
 	data, err := proto.Marshal(req)
 	if err != nil {
 		log.Printf("[error] %s", err.Error())
