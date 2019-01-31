@@ -73,6 +73,9 @@ var (
 	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
 
 	flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
+
+	flagEnSK = kingpin.Flag("en-sk", ``).String()
+	flagDeSK = kingpin.Flag("de-sk", ``).String()
 )
 
 func initCfg() error {
@@ -170,6 +173,18 @@ func main() {
 
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
+
+	if len(*flagEnSK) > 0 {
+		enSk := cfg.XorEncode(*flagEnSK)
+		fmt.Println(enSk)
+		return
+	}
+
+	if len(*flagDeSK) > 0 {
+		deSk := cfg.XorDecode(*flagDeSK)
+		fmt.Println(string(deSk))
+		return
+	}
 
 	if *flagVersionInfo {
 		fmt.Printf(`Version:        %s

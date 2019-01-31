@@ -83,7 +83,7 @@ func LoadConfig(f string) error {
 	}
 
 	if Cfg.SK != "" {
-		DecodedSK = string(xorDecode(Cfg.SK))
+		DecodedSK = string(XorDecode(Cfg.SK))
 	}
 
 	if Cfg.EnableAll == 1 {
@@ -157,7 +157,7 @@ func XorEncode(sk string) string {
 	return base64.StdEncoding.EncodeToString(en.Bytes())
 }
 
-func xorDecode(endata string) []byte {
+func XorDecode(endata string) []byte {
 	data, err := base64.StdEncoding.DecodeString(endata)
 	if err != nil {
 		return nil
