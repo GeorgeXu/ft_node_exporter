@@ -76,6 +76,7 @@ var (
 )
 
 func initCfg() error {
+
 	cfg.Cfg.SingleMode = *flagSingleMode
 
 	if *flagHost != "" {
@@ -90,7 +91,7 @@ func initCfg() error {
 
 	// unique-id 为必填参数
 	if *flagTeamID == "" {
-		log.Println("[fatal] invalid team-id")
+		log.Fatalln("[fatal] invalid team-id")
 	} else {
 		cfg.Cfg.TeamID = *flagTeamID
 	}
@@ -104,13 +105,13 @@ func initCfg() error {
 	cfg.Cfg.UploaderUID = fmt.Sprintf("uid-%s", uid.String())
 
 	if *flagAK == "" {
-		log.Println("[fatal] invalid ak")
+		log.Fatalln("[fatal] invalid ak")
 	} else {
 		cfg.Cfg.AK = *flagAK
 	}
 
 	if *flagSK == "" {
-		log.Println("[fatal] invalid sk")
+		log.Fatalln("[fatal] invalid sk")
 	} else {
 		cfg.Cfg.SK = cfg.XorEncode(*flagSK)
 	}
@@ -203,7 +204,7 @@ Golang Version: %s
 	envinfo.Init(cfg.Cfg.EnvCfgFile)
 	fileinfo.Init(cfg.Cfg.FileInfoCfgFile)
 
-	log.Println("[info] start corsair...")
+	log.Println(fmt.Sprintf("[info] start corsair on %d ...", *flagPort))
 
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报

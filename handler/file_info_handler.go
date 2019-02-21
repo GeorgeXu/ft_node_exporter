@@ -29,7 +29,7 @@ func NewFileInfoHandler() *fileInfoHandler {
 func (h *fileInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters := r.URL.Query()["collect[]"]
 
-	log.Printf("[debug] env collect query:", filters)
+	//log.Printf("[debug] env collect query:", filters)
 
 	if len(filters) == 0 {
 		h.unfilteredHandler.ServeHTTP(w, r)
