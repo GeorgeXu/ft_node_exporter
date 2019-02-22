@@ -13,6 +13,23 @@ import (
 	"github.com/prometheus/node_exporter/cloudcare"
 )
 
+var forbidTags = []string{
+	"alertname",
+	"exported_",
+	"__name__",
+	"__scheme__",
+	"__address__",
+	"__metrics_path__",
+	"__",
+	"__meta_",
+	"__tmp_",
+	"__param_",
+	"job",
+	"instance",
+	"le",
+	"quantile",
+}
+
 const (
 	envCollectorTypeCat     = `cat`
 	envCollectorTypeOSQuery = `osquery`
@@ -151,7 +168,19 @@ func (ec *envCollector) osqueryUpdate(ch chan<- prometheus.Metric) error {
 
 	entry := res[0]
 	var keys = []string{hostKey, uploaduidKey}
+	var tuned []string
 	for k := range entry {
+		bforbid := false
+		for _, ft := range forbidTags {
+			if ft == k {
+				bforbid = true
+				break
+			}
+		}
+		if bforbid {
+			k = k + "_"
+			tuned = append(tuned, k)
+		}
 		keys = append(keys, k)
 	}
 
@@ -167,6 +196,12 @@ func (ec *envCollector) osqueryUpdate(ch chan<- prometheus.Metric) error {
 		m[hostKey] = cfg.Cfg.Host
 		var vals []string
 		for _, k := range keys {
+			for _, tk := range tuned {
+				if tk == k {
+					k = k[:len(k)-1]
+					break
+				}
+			}
 			vals = append(vals, m[k])
 		}
 		ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, -1, vals...)
