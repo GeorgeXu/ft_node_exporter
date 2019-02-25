@@ -40,6 +40,7 @@ type Meta struct {
 	Host        string `json:"host"`
 	HostName    string `json:"host_name"`
 	Provider    string `json:"provider"`
+	GroupName   string `json:"group_name"`
 }
 
 var (

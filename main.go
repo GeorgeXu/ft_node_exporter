@@ -208,35 +208,35 @@ Golang Version: %s
 
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
-		getURLMetric := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *metricsPath)
+		// getURLMetric := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *metricsPath)
 
-		log.Printf("[debug] metric url: %s", getURLMetric)
+		// log.Printf("[debug] metric url: %s", getURLMetric)
 
-		postURLMetric := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write")
+		// postURLMetric := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write")
 
-		if err := cloudcare.Start(postURLMetric, getURLMetric, int64(cfg.Cfg.ScrapeMetricInterval)); err != nil {
-			log.Fatalf("[fatal] %s", err)
-		}
+		// if err := cloudcare.Start(postURLMetric, getURLMetric, int64(cfg.Cfg.ScrapeMetricInterval)); err != nil {
+		// 	log.Fatalf("[fatal] %s", err)
+		// }
 
-		// env info 收集器
-		getURLEnv := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *envInfoPath)
+		// // env info 收集器
+		// getURLEnv := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *envInfoPath)
 
-		log.Printf("[debug] env-info url: %s", getURLEnv)
+		// log.Printf("[debug] env-info url: %s", getURLEnv)
 
-		postURLEnv := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
-		if err := cloudcare.Start(postURLEnv, getURLEnv, int64(cfg.Cfg.ScrapeEnvInfoInterval)); err != nil {
-			log.Fatalf("[fatal] %s", err)
-		}
+		// postURLEnv := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
+		// if err := cloudcare.Start(postURLEnv, getURLEnv, int64(cfg.Cfg.ScrapeEnvInfoInterval)); err != nil {
+		// 	log.Fatalf("[fatal] %s", err)
+		// }
 
-		// file info 收集器
-		getURLFile := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *fileInfoPath)
+		// // file info 收集器
+		// getURLFile := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *fileInfoPath)
 
-		log.Printf("[debug] env-info url: %s", getURLFile)
+		// log.Printf("[debug] env-info url: %s", getURLFile)
 
-		postURLFile := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
-		if err := cloudcare.Start(postURLFile, getURLFile, int64(cfg.Cfg.ScrapeFileInfoInterval)); err != nil {
-			log.Fatalf("[fatal] %s", err)
-		}
+		// postURLFile := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
+		// if err := cloudcare.Start(postURLFile, getURLFile, int64(cfg.Cfg.ScrapeFileInfoInterval)); err != nil {
+		// 	log.Fatalf("[fatal] %s", err)
+		// }
 
 		// TODO: 这些主动上报收集器, 并入集群模式时, 需要设计退出机制
 	}
@@ -254,9 +254,7 @@ Golang Version: %s
 
 		j, err := json.Marshal(&cfg.Meta{
 			UploaderUID: cfg.Cfg.UploaderUID,
-			Host:        cfg.Cfg.Host,
-			HostName:    hostName,
-			Provider:    cfg.Cfg.Provider,
+			GroupName:   hostName,
 		})
 
 		if err != nil {

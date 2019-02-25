@@ -16,7 +16,7 @@ LOCAL_PORT = 80
 
 # 正式环境
 RELEASE_KODO_HOST = https://kodo.prof.wang
-RELEASE_DOWNLOAD_ADDR = diaobaoyun-agent.oss-cn-hangzhou.aliyuncs.com/corsair/release
+RELEASE_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/release
 RELEASE_SSL = 1
 RELEASE_PORT = 443
 

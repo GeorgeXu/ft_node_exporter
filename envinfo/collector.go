@@ -10,11 +10,15 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/node_exporter/cfg"
 )
 
 const namespace = "envinfo"
 
-type queryResult []map[string]string
+type queryResult struct {
+	rawJson    string
+	formatJson []map[string]string
+}
 
 var (
 	OSQuerydPath = ""
@@ -128,7 +132,7 @@ func doCat(path string) (string, error) {
 	return res, nil
 }
 
-func doQuery(sql string) (queryResult, error) {
+func doQuery(sql string) (*queryResult, error) {
 	cmd := exec.Command(OSQuerydPath, []string{`-S`, `--json`, sql}...)
 
 	out, err := cmd.Output()
@@ -137,10 +141,14 @@ func doQuery(sql string) (queryResult, error) {
 	}
 
 	var res queryResult
-	err = json.Unmarshal(out, &res)
-	if err != nil {
-		return nil, err
+	if cfg.Cfg.SingleMode == 0 {
+		err = json.Unmarshal(out, &res.formatJson)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		res.rawJson = base64.RawURLEncoding.EncodeToString(out)
 	}
 
-	return res, nil
+	return &res, nil
 }

@@ -64,21 +64,24 @@ type envCollector struct {
 }
 
 var (
-	hostKey      = "ft_" + cloudcare.TagHost
-	uploaduidKey = "ft_" + cloudcare.TagUploaderUID
+	//hostKey      = "ft_" + cloudcare.TagHost
+	uploaduidKey = cloudcare.TagUploaderUID
 )
 
-func NewEnvCollector(cfg *envCfg) (Collector, error) {
+func NewEnvCollector(conf *envCfg) (Collector, error) {
 	c := &envCollector{
-		cfg: cfg,
+		cfg: conf,
 	}
-	if cfg.Type == envCollectorTypeCat {
-		cfg.Tags = append(cfg.Tags, uploaduidKey, hostKey)
-		c.desc = prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", cfg.SubSystem),
-			cfg.Help, cfg.Tags, nil)
 
+	if cfg.Cfg.SingleMode == 0 {
+		uploaduidKey = "ft_" + cloudcare.TagUploaderUID //集群模式下 避免和osquery产生的结果冲突
 	}
+
+	conf.Tags = append(conf.Tags, uploaduidKey)
+	c.desc = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "", conf.SubSystem),
+		conf.Help, conf.Tags, nil)
+
 	return c, nil
 }
 
@@ -150,7 +153,7 @@ func (ec *envCollector) catUpdate(ch chan<- prometheus.Metric) error {
 func newEnvMetric(ec *envCollector, envVal string) prometheus.Metric {
 	return prometheus.MustNewConstMetric(ec.desc, prometheus.GaugeValue, float64(-1), envVal,
 		// 此处追加两个 tag, 在 queue-manager 那边也会追加, 有重复, 待去掉
-		cfg.Cfg.UploaderUID, cfg.Cfg.Host)
+		cfg.Cfg.UploaderUID)
 	return nil
 }
 
@@ -159,52 +162,55 @@ func (ec *envCollector) osqueryUpdate(ch chan<- prometheus.Metric) error {
 	if err != nil {
 		return err
 	}
-	_ = res
 
-	n := len(res)
-	if n == 0 {
-		return nil
-	}
-
-	entry := res[0]
-	var keys = []string{hostKey, uploaduidKey}
-	var tuned []string
-	for k := range entry {
-		bforbid := false
-		for _, ft := range forbidTags {
-			if ft == k {
-				bforbid = true
-				break
-			}
+	//集群模式下，兼容promtheous
+	if cfg.Cfg.SingleMode == 0 {
+		n := len(res.formatJson)
+		if n == 0 {
+			return nil
 		}
-		if bforbid {
-			k = k + "_"
-			tuned = append(tuned, k)
-		}
-		keys = append(keys, k)
-	}
 
-	desc := prometheus.NewDesc(
-		prometheus.BuildFQName(namespace, "", ec.cfg.SubSystem),
-		ec.cfg.Help,
-		keys,
-		nil,
-	)
-
-	for _, m := range res {
-		m[uploaduidKey] = cfg.Cfg.UploaderUID
-		m[hostKey] = cfg.Cfg.Host
-		var vals []string
-		for _, k := range keys {
-			for _, tk := range tuned {
-				if tk == k {
-					k = k[:len(k)-1]
+		entry := res.formatJson[0]
+		var keys = ec.cfg.Tags
+		var tuned []string
+		for k := range entry {
+			bforbid := false
+			for _, ft := range forbidTags {
+				if ft == k {
+					bforbid = true
 					break
 				}
 			}
-			vals = append(vals, m[k])
+			if bforbid {
+				k = k + "_"
+				tuned = append(tuned, k)
+			}
+			keys = append(keys, k)
 		}
-		ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, -1, vals...)
+
+		desc := prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, "", ec.cfg.SubSystem),
+			ec.cfg.Help,
+			keys,
+			nil,
+		)
+
+		for _, m := range res.formatJson {
+			m[uploaduidKey] = cfg.Cfg.UploaderUID
+			var vals []string
+			for _, k := range keys {
+				for _, tk := range tuned {
+					if tk == k {
+						k = k[:len(k)-1]
+						break
+					}
+				}
+				vals = append(vals, m[k])
+			}
+			ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, -1, vals...)
+		}
+	} else {
+		ch <- newEnvMetric(ec, res.rawJson)
 	}
 
 	return nil
