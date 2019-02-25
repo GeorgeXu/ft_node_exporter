@@ -204,7 +204,7 @@ Golang Version: %s
 	envinfo.Init(cfg.Cfg.EnvCfgFile)
 	fileinfo.Init(cfg.Cfg.FileInfoCfgFile)
 
-	log.Println(fmt.Sprintf("[info] start corsair on %d ...", *flagPort))
+	log.Println(fmt.Sprintf("[info] start corsair on %d ...", cfg.Cfg.Port))
 
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
