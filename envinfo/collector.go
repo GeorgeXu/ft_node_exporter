@@ -2,6 +2,7 @@ package envinfo
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os/exec"
@@ -12,6 +13,8 @@ import (
 )
 
 const namespace = "envinfo"
+
+type queryResult []map[string]string
 
 var (
 	OSQuerydPath = ""
@@ -125,14 +128,19 @@ func doCat(path string) (string, error) {
 	return res, nil
 }
 
-func doQuery(sql string) (string, error) {
+func doQuery(sql string) (queryResult, error) {
 	cmd := exec.Command(OSQuerydPath, []string{`-S`, `--json`, sql}...)
 
 	out, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	res := base64.RawURLEncoding.EncodeToString(out)
+	var res queryResult
+	err = json.Unmarshal(out, &res)
+	if err != nil {
+		return nil, err
+	}
+
 	return res, nil
 }

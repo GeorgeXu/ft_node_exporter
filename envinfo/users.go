@@ -1,8 +1,6 @@
 package envinfo
 
 import (
-	"fmt"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -30,12 +28,12 @@ func NewUserCollector(_ *envCfg) (Collector, error) {
 }
 
 func (c *userCollector) Update(ch chan<- prometheus.Metric) error {
-	j, err := doQuery("select * from users")
+	// j, err := doQuery("select * from users")
 
-	if err != nil {
-		return fmt.Errorf("osquery: could not get uses: %s", err)
-	}
+	// if err != nil {
+	// 	return fmt.Errorf("osquery: could not get uses: %s", err)
+	// }
 
-	ch <- prometheus.MustNewConstMetric(c.entries, prometheus.GaugeValue, float64(-1), j)
+	// ch <- prometheus.MustNewConstMetric(c.entries, prometheus.GaugeValue, float64(-1), j)
 	return nil
 }

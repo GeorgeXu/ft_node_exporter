@@ -13,6 +13,23 @@ import (
 	"github.com/prometheus/node_exporter/cloudcare"
 )
 
+var forbidTags = []string{
+	"alertname",
+	"exported_",
+	"__name__",
+	"__scheme__",
+	"__address__",
+	"__metrics_path__",
+	"__",
+	"__meta_",
+	"__tmp_",
+	"__param_",
+	"job",
+	"instance",
+	"le",
+	"quantile",
+}
+
 const (
 	envCollectorTypeCat     = `cat`
 	envCollectorTypeOSQuery = `osquery`
@@ -42,16 +59,27 @@ type envCfgs struct {
 }
 
 type envCollector struct {
-	entries *prometheus.Desc
-	cfg     *envCfg
+	desc *prometheus.Desc
+	cfg  *envCfg
 }
 
+var (
+	hostKey      = "ft_" + cloudcare.TagHost
+	uploaduidKey = "ft_" + cloudcare.TagUploaderUID
+)
+
 func NewEnvCollector(cfg *envCfg) (Collector, error) {
-	return &envCollector{
+	c := &envCollector{
 		cfg: cfg,
-		entries: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, cfg.SubSystem, `_`),
-			cfg.Help, cfg.Tags, nil)}, nil
+	}
+	if cfg.Type == envCollectorTypeCat {
+		cfg.Tags = append(cfg.Tags, uploaduidKey, hostKey)
+		c.desc = prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, "", cfg.SubSystem),
+			cfg.Help, cfg.Tags, nil)
+
+	}
+	return c, nil
 }
 
 func Init(cfgFile string) {
@@ -67,20 +95,23 @@ func Init(cfgFile string) {
 
 	for _, ec := range envCfgs.Envs {
 		if ec.Platform != "" && ec.Platform == runtime.GOOS {
-			ec.Tags = append(ec.Tags, cloudcare.TagUploaderUID, cloudcare.TagHost) // 追加默认 tags
+
+			//ec.Tags = append(ec.Tags, cloudcare.TagUploaderUID, cloudcare.TagHost) // 追加默认 tags
 			registerCollector(ec.SubSystem, ec.Enabled, NewEnvCollector, ec)
+
 		} else {
 			log.Printf("[info] skip collector %s(platform: %s)", ec.SubSystem, ec.Platform)
 		}
 	}
+
 }
 
 func (ec *envCollector) Update(ch chan<- prometheus.Metric) error {
 	switch ec.cfg.Type {
 	case envCollectorTypeCat:
-		return catUpdate(ec, ch)
+		return ec.catUpdate(ch)
 	case envCollectorTypeOSQuery:
-		return osqueryUpdate(ec, ch)
+		return ec.osqueryUpdate(ch)
 	default:
 		log.Printf("[warn] unsupported env collector type: %s", ec.cfg.Type)
 		return nil
@@ -88,7 +119,7 @@ func (ec *envCollector) Update(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
-func catUpdate(ec *envCollector, ch chan<- prometheus.Metric) error {
+func (ec *envCollector) catUpdate(ch chan<- prometheus.Metric) error {
 	var rawFileContents []string
 	for _, f := range ec.cfg.Files {
 		if _, err := os.Stat(f); err != nil {
@@ -117,17 +148,64 @@ func catUpdate(ec *envCollector, ch chan<- prometheus.Metric) error {
 }
 
 func newEnvMetric(ec *envCollector, envVal string) prometheus.Metric {
-	return prometheus.MustNewConstMetric(ec.entries, prometheus.GaugeValue, float64(-1), envVal,
+	return prometheus.MustNewConstMetric(ec.desc, prometheus.GaugeValue, float64(-1), envVal,
 		// 此处追加两个 tag, 在 queue-manager 那边也会追加, 有重复, 待去掉
 		cfg.Cfg.UploaderUID, cfg.Cfg.Host)
+	return nil
 }
 
-func osqueryUpdate(ec *envCollector, ch chan<- prometheus.Metric) error {
-	j, err := doQuery(ec.cfg.SQL)
+func (ec *envCollector) osqueryUpdate(ch chan<- prometheus.Metric) error {
+	res, err := doQuery(ec.cfg.SQL)
 	if err != nil {
 		return err
 	}
+	_ = res
 
-	ch <- newEnvMetric(ec, j)
+	n := len(res)
+	if n == 0 {
+		return nil
+	}
+
+	entry := res[0]
+	var keys = []string{hostKey, uploaduidKey}
+	var tuned []string
+	for k := range entry {
+		bforbid := false
+		for _, ft := range forbidTags {
+			if ft == k {
+				bforbid = true
+				break
+			}
+		}
+		if bforbid {
+			k = k + "_"
+			tuned = append(tuned, k)
+		}
+		keys = append(keys, k)
+	}
+
+	desc := prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "", ec.cfg.SubSystem),
+		ec.cfg.Help,
+		keys,
+		nil,
+	)
+
+	for _, m := range res {
+		m[uploaduidKey] = cfg.Cfg.UploaderUID
+		m[hostKey] = cfg.Cfg.Host
+		var vals []string
+		for _, k := range keys {
+			for _, tk := range tuned {
+				if tk == k {
+					k = k[:len(k)-1]
+					break
+				}
+			}
+			vals = append(vals, m[k])
+		}
+		ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, -1, vals...)
+	}
+
 	return nil
 }
