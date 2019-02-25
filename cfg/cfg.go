@@ -21,6 +21,7 @@ type Config struct {
 	Port            int    `yaml:"port"`
 	SingleMode      int    `yaml:"single_mode"`
 	Host            string `yaml:"host"`
+	GroupName       string `yaml:"group_name"`
 	RemoteHost      string `yaml:"remote_host"`
 	EnableAll       int    `yaml:"enable_all"`
 	EnvCfgFile      string `yaml:"env_cfg_file"`
@@ -37,9 +38,7 @@ type Config struct {
 
 type Meta struct {
 	UploaderUID string `json:"uploader_uid"`
-	Host        string `json:"host"`
-	HostName    string `json:"host_name"`
-	Provider    string `json:"provider"`
+	GroupName   string `json:"group_name"`
 }
 
 var (

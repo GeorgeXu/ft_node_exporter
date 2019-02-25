@@ -40,7 +40,7 @@ var (
 	envInfoPath  = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/env_infos").String()
 	fileInfoPath = kingpin.Flag("web.telemetry-file-info-path", "Path under which to expose file info.").Default("/file_infos").String()
 
-	metaPath = kingpin.Flag("web.meta-path", "Path under which to expose meta info.").Default("/meta").String()
+	cfgAPI = kingpin.Flag("web.meta-path", "Path under which to expose meta info.").Default("/config").String()
 
 	disableExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).").Bool()
 
@@ -48,6 +48,9 @@ var (
 	flagInit       = kingpin.Flag("init", `init collector`).Bool()
 	flagUpgrade    = kingpin.Flag("upgrade", ``).Bool()
 	flagHost       = kingpin.Flag("host", `eg. ip addr`).Default(cfg.Cfg.Host).String()
+
+	flagGroupName = kingpin.Flag(`group-name`, `group name`).Default(cfg.Cfg.GroupName).String()
+
 	flagRemoteHost = kingpin.Flag("remote-host", `data bridge addr`).Default(cfg.Cfg.RemoteHost).String()
 
 	flagScrapeMetricInterval = kingpin.Flag("scrape-metric-interval",
@@ -67,10 +70,10 @@ var (
 	flagTeamID      = kingpin.Flag("team-id", "User ID").String()
 	flagAK          = kingpin.Flag("ak", `Access Key`).String()
 	flagSK          = kingpin.Flag("sk", `Secret Key`).String()
-	flagCfgFile     = kingpin.Flag("cfg", `configure file`).Default("/usr/local/cloudcare/corsair.yml").String()
+	flagCfgFile     = kingpin.Flag("cfg", `configure file`).Default("/usr/local/cloudcare/corsair/corsair.yml").String()
 	flagVersionInfo = kingpin.Flag("version", "show version info").Bool()
 	flagCheck       = kingpin.Flag("check", "check if ok").Default("0").Int()
-	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
+	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare/corsair").String()
 
 	flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
 
@@ -92,14 +95,16 @@ func initCfg() error {
 	cfg.Cfg.ScrapeFileInfoInterval = *flagScrapeFileInfoInterval
 	cfg.Cfg.EnableAll = *flagEnableAllCollectors
 
-	// unique-id 为必填参数
-	if *flagTeamID == "" {
-		log.Fatalln("[fatal] invalid team-id")
-	} else {
+	// 单机模式下，team-id 为必填参数
+	if *flagTeamID != "" {
 		cfg.Cfg.TeamID = *flagTeamID
+	} else {
+		if *flagSingleMode == 1 {
+			log.Fatal("--team-id required")
+		}
 	}
 
-	// 客户端自行生成 ID, 而不是 kodo 下发
+	// 客户端自行生成 ID
 	uid, err := uuid.NewV4()
 	if err != nil {
 		log.Fatal(err)
@@ -260,7 +265,7 @@ Golang Version: %s
 	http.Handle(*fileInfoPath, handler.NewFileInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
 
-	http.HandleFunc(*metaPath, func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(*cfgAPI, func(w http.ResponseWriter, r *http.Request) {
 		hostName, err := os.Hostname()
 		if err != nil {
 			log.Printf("[error] %s, ignored", err.Error())
@@ -268,11 +273,13 @@ Golang Version: %s
 			cloudcare.HostName = hostName // 每次该接口被调用时, 都尝试更新一下全局的 hostname(在运行期间可能变更)
 		}
 
+		if cfg.Cfg.GroupName == "" { // GroupName 默认为探针运行所在机器的 hostname
+			cfg.Cfg.GroupName = hostName
+		}
+
 		j, err := json.Marshal(&cfg.Meta{
 			UploaderUID: cfg.Cfg.UploaderUID,
-			Host:        cfg.Cfg.Host,
-			HostName:    hostName,
-			Provider:    cfg.Cfg.Provider,
+			GroupName:   cfg.Cfg.GroupName,
 		})
 
 		if err != nil {

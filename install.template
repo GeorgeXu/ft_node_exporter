@@ -10,7 +10,7 @@ bin_name="corsair"
 service_name="corsair"
 
 # 安装目录设置
-install_dir=/usr/local/cloudcare
+install_dir=/usr/local/cloudcare/corsair
 pid_file="${install_dir}"/"${bin_name}".pid
 yml_cfg="${install_dir}"/corsair.yml
 env_cfg="${install_dir}"/env.json
