@@ -63,6 +63,7 @@ var (
 	}
 
 	DecodedSK = ""
+	ProbeName = `corsair`
 )
 
 // 导入 @f 中的配置

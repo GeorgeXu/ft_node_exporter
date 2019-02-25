@@ -15,6 +15,7 @@ import (
 const (
 	TagUploaderUID = `uploader_uid`
 	TagHost        = `host`
+	TagProbeName   = `probe_name`
 )
 
 var (

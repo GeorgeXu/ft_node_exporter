@@ -62,7 +62,7 @@ func (h *metricHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filteredHandler.ServeHTTP(w, r)
 }
 
-// innerHandler is used to create buth the one unfiltered http.Handler to be
+// innerHandler is used to create both the one unfiltered http.Handler to be
 // wrapped by the outer handler and also the filtered handlers created on the
 // fly. The former is accomplished by calling innerHandler without any arguments
 // (in which case it will log all the collectors enabled via command-line

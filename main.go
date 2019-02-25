@@ -258,6 +258,7 @@ Golang Version: %s
 	http.Handle(*envInfoPath, handler.NewEnvInfoHandler())
 	http.Handle(*fileInfoPath, handler.NewFileInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
+
 	http.HandleFunc(*metaPath, func(w http.ResponseWriter, r *http.Request) {
 		hostName, err := os.Hostname()
 		if err != nil {
