@@ -97,13 +97,14 @@ func NewNodeCollector(filters ...string) (*NodeCollector, error) {
 			collector, err := factories[key]() // call NewxxxCollector()
 			if err != nil {
 				continue
-				//return nil, err
 			}
+
 			if len(f) == 0 || f[key] {
 				collectors[key] = collector
 			}
 		}
 	}
+
 	return &NodeCollector{Collectors: collectors}, nil
 }
 
@@ -115,6 +116,21 @@ func (n NodeCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (n NodeCollector) Collect(ch chan<- prometheus.Metric) {
+	/**
+	 * Collect 调用栈:
+	 *   goroutine 80 [running]:
+	 *   runtime/debug.Stack(0x0, 0xc42005d730, 0xc42005d7c6)
+	 *   /usr/local/go/src/runtime/debug/stack.go:24 +0xa7
+	 *   runtime/debug.PrintStack()
+	 *   /usr/local/go/src/runtime/debug/stack.go:16 +0x22
+	 *   github.com/prometheus/node_exporter/collector.NodeCollector.Collect(0xc4204f2e10, 0xc4201741e0)
+	 *   /home/coanor/go/src/github.com/prometheus/node_exporter/collector/collector.go:121 +0x34
+	 *   github.com/prometheus/node_exporter/vendor/github.com/prometheus/client_golang/prometheus.(*Registry).Gather.func1()
+	 *   /home/coanor/go/src/github.com/prometheus/node_exporter/vendor/github.com/prometheus/client_golang/prometheus/registry.go:430 +0x199
+	 *   created by github.com/prometheus/node_exporter/vendor/github.com/prometheus/client_golang/prometheus.(*Registry).Gather
+	 *   /home/coanor/go/src/github.com/prometheus/node_exporter/vendor/github.com/prometheus/client_golang/prometheus/registry.go:441 +0x599
+	 */
+
 	wg := sync.WaitGroup{}
 	wg.Add(len(n.Collectors))
 

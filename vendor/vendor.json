@@ -1505,6 +1505,12 @@
 			"revisionTime": "2018-11-27T06:38:13Z"
 		},
 		{
+			"checksumSHA1": "P/k5ZGf0lEBgpKgkwy++F7K1PSg=",
+			"path": "gopkg.in/go-playground/validator.v8",
+			"revision": "5f1438d3fca68893a817e4a66806cea46a9e4ebf",
+			"revisionTime": "2017-07-30T05:02:35Z"
+		},
+		{
 			"checksumSHA1": "6f8MEU31llHM1sLM/GGH4/Qxu0A=",
 			"origin": "github.com/prometheus/prometheus/vendor/gopkg.in/inf.v0",
 			"path": "gopkg.in/inf.v0",

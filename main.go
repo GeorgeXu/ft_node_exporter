@@ -72,7 +72,10 @@ var (
 	flagCheck       = kingpin.Flag("check", "check if ok").Default("0").Int()
 	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
 
-	//flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
+	flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
+
+	flagEnSK = kingpin.Flag("en-sk", ``).String()
+	flagDeSK = kingpin.Flag("de-sk", ``).String()
 )
 
 func initCfg() error {
@@ -119,7 +122,7 @@ func initCfg() error {
 	cfg.Cfg.Port = *flagPort
 	cfg.Cfg.EnvCfgFile = *flagEnvCfg
 	cfg.Cfg.FileInfoCfgFile = *flagFileInfoCfg
-	//cfg.Cfg.Provider = *flagProvider
+	cfg.Cfg.Provider = *flagProvider
 
 	cfg.Cfg.Collectors = collector.ListAllCollectors()
 
@@ -171,6 +174,18 @@ func main() {
 
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
+
+	if len(*flagEnSK) > 0 {
+		enSk := cfg.XorEncode(*flagEnSK)
+		fmt.Println(enSk)
+		return
+	}
+
+	if len(*flagDeSK) > 0 {
+		deSk := cfg.XorDecode(*flagDeSK)
+		fmt.Println(string(deSk))
+		return
+	}
 
 	if *flagVersionInfo {
 		fmt.Printf(`Version:        %s
@@ -244,6 +259,7 @@ Golang Version: %s
 	http.Handle(*envInfoPath, handler.NewEnvInfoHandler())
 	http.Handle(*fileInfoPath, handler.NewFileInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
+
 	http.HandleFunc(*metaPath, func(w http.ResponseWriter, r *http.Request) {
 		hostName, err := os.Hostname()
 		if err != nil {

@@ -44,7 +44,7 @@ type ClientConfig struct {
 	HTTPClientConfig config_util.HTTPClientConfig
 }
 
-type kodoMsg struct {
+type KodoMsg struct {
 	Msg      string `json:"msg"`
 	Error    string `json:"error"`
 	Rejected bool   `json:"rejected"`
@@ -69,7 +69,8 @@ type recoverableError struct {
 	error
 }
 
-func calcSig(content []byte, contentType string, dateStr string, key string, method string, skVal string) string {
+func calcSig(content []byte, contentType string,
+	dateStr string, key string, method string, skVal string) string {
 	h := md5.New()
 	h.Write(content)
 
@@ -119,7 +120,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
 	httpReq.Header.Add("Content-Encoding", contentEncode)
 	httpReq.Header.Set("Content-Type", contentType)
-	httpReq.Header.Set("X-Version", "corsair/"+git.Version)
+	httpReq.Header.Set("X-Version", cfg.ProbeName+"/"+git.Version)
 	httpReq.Header.Set("X-Team-Id", cfg.Cfg.TeamID)
 	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
 	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
@@ -146,7 +147,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
 		if scanner.Scan() {
 			line = scanner.Bytes()
-			var msg kodoMsg
+			var msg KodoMsg
 
 			if err := json.Unmarshal(line, &msg); err != nil {
 				// pass

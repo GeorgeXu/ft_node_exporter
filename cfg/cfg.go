@@ -25,7 +25,7 @@ type Config struct {
 	EnableAll       int    `yaml:"enable_all"`
 	EnvCfgFile      string `yaml:"env_cfg_file"`
 	FileInfoCfgFile string `yaml:"fileinfo_cfg_file"`
-	//Provider        string `yaml:"provider"`
+	Provider        string `yaml:"provider"`
 
 	ScrapeMetricInterval   int `yaml:"scrap_metric_interval"`
 	ScrapeEnvInfoInterval  int `yaml:"scrap_env_info_interval"`
@@ -64,6 +64,7 @@ var (
 	}
 
 	DecodedSK = ""
+	ProbeName = `corsair`
 )
 
 // 导入 @f 中的配置
@@ -84,7 +85,7 @@ func LoadConfig(f string) error {
 	}
 
 	if Cfg.SK != "" {
-		DecodedSK = string(xorDecode(Cfg.SK))
+		DecodedSK = string(XorDecode(Cfg.SK))
 	}
 
 	if Cfg.EnableAll == 1 {
@@ -158,7 +159,7 @@ func XorEncode(sk string) string {
 	return base64.StdEncoding.EncodeToString(en.Bytes())
 }
 
-func xorDecode(endata string) []byte {
+func XorDecode(endata string) []byte {
 	data, err := base64.StdEncoding.DecodeString(endata)
 	if err != nil {
 		return nil
