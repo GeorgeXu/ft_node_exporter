@@ -64,8 +64,7 @@ type envCollector struct {
 }
 
 var (
-	//hostKey      = "ft_" + cloudcare.TagHost
-	uploaduidKey = cloudcare.TagUploaderUID
+	JsonFormat = false
 )
 
 func NewEnvCollector(conf *envCfg) (Collector, error) {
@@ -73,11 +72,7 @@ func NewEnvCollector(conf *envCfg) (Collector, error) {
 		cfg: conf,
 	}
 
-	if cfg.Cfg.SingleMode == 0 {
-		uploaduidKey = "ft_" + cloudcare.TagUploaderUID //集群模式下 避免和osquery产生的结果冲突
-	}
-
-	conf.Tags = append(conf.Tags, uploaduidKey)
+	conf.Tags = append(conf.Tags, cloudcare.TagUploaderUID)
 	c.desc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "", conf.SubSystem),
 		conf.Help, conf.Tags, nil)
@@ -164,14 +159,16 @@ func (ec *envCollector) osqueryUpdate(ch chan<- prometheus.Metric) error {
 	}
 
 	//集群模式下，兼容promtheous
-	if cfg.Cfg.SingleMode == 0 {
+	if !JsonFormat {
 		n := len(res.formatJson)
 		if n == 0 {
 			return nil
 		}
 
+		uploaduidKey := "ft_" + cloudcare.TagUploaderUID //集群模式下 避免和osquery产生的结果冲突
+
 		entry := res.formatJson[0]
-		var keys = ec.cfg.Tags
+		var keys = []string{uploaduidKey}
 		var tuned []string
 		for k := range entry {
 			bforbid := false

@@ -72,7 +72,7 @@ var (
 	flagCheck       = kingpin.Flag("check", "check if ok").Default("0").Int()
 	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
 
-	flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
+	//flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
 )
 
 func initCfg() error {
@@ -119,12 +119,12 @@ func initCfg() error {
 	cfg.Cfg.Port = *flagPort
 	cfg.Cfg.EnvCfgFile = *flagEnvCfg
 	cfg.Cfg.FileInfoCfgFile = *flagFileInfoCfg
-	cfg.Cfg.Provider = *flagProvider
+	//cfg.Cfg.Provider = *flagProvider
 
 	cfg.Cfg.Collectors = collector.ListAllCollectors()
 
 	if cfg.Cfg.EnableAll == 1 {
-		for k, _ := range cfg.Cfg.Collectors {
+		for k := range cfg.Cfg.Collectors {
 			cfg.Cfg.Collectors[k] = true
 		}
 	}
@@ -276,6 +276,6 @@ Golang Version: %s
 
 	defer l.Close()
 	if err := http.Serve(l, nil); err != nil {
-		log.Printf("[fatal]", err)
+		log.Println("[fatal]", err)
 	}
 }

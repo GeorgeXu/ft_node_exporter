@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/node_exporter/cfg"
 )
 
 const namespace = "envinfo"
@@ -141,7 +140,7 @@ func doQuery(sql string) (*queryResult, error) {
 	}
 
 	var res queryResult
-	if cfg.Cfg.SingleMode == 0 {
+	if !JsonFormat {
 		err = json.Unmarshal(out, &res.formatJson)
 		if err != nil {
 			return nil, err

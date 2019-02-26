@@ -25,7 +25,7 @@ type Config struct {
 	EnableAll       int    `yaml:"enable_all"`
 	EnvCfgFile      string `yaml:"env_cfg_file"`
 	FileInfoCfgFile string `yaml:"fileinfo_cfg_file"`
-	Provider        string `yaml:"provider"`
+	//Provider        string `yaml:"provider"`
 
 	ScrapeMetricInterval   int `yaml:"scrap_metric_interval"`
 	ScrapeEnvInfoInterval  int `yaml:"scrap_env_info_interval"`
