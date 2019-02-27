@@ -138,11 +138,11 @@ func compileArch(bin, goos, goarch, dir string) {
 		"GOARCH=" + goarch,
 	}
 
-	if *flagCGO {
-		env = append(env, "CGO_ENABLED=1")
-	} else {
-		env = append(env, "CGO_ENABLED=0")
-	}
+	// if *flagCGO {
+	// 	env = append(env, "CGO_ENABLED=1")
+	// } else {
+	// 	env = append(env, "CGO_ENABLED=0")
+	// }
 
 	runEnv(args, env)
 }

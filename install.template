@@ -111,7 +111,7 @@ do
       shift
       ;;
 
-    --corsair-port)
+    --port)
       corsair_port="$2"
       shift
       ;;

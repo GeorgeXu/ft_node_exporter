@@ -34,6 +34,12 @@ func NewEnvInfoHandler() *envInfoHandler {
 
 func (h *envInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters := r.URL.Query()["collect[]"]
+	format := r.URL.Query()["format"]
+	if len(format) > 0 {
+		envinfo.JsonFormat = (format[0] == "json")
+	} else {
+		envinfo.JsonFormat = false
+	}
 
 	// log.Printf("[debug] env collect query:", filters)
 

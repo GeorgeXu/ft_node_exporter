@@ -133,7 +133,7 @@ func initCfg() error {
 	cfg.Cfg.Collectors = collector.ListAllCollectors()
 
 	if cfg.Cfg.EnableAll == 1 {
-		for k, _ := range cfg.Cfg.Collectors {
+		for k := range cfg.Cfg.Collectors {
 			cfg.Cfg.Collectors[k] = true
 		}
 	}
@@ -225,7 +225,7 @@ Golang Version: %s
 	envinfo.Init(cfg.Cfg.EnvCfgFile)
 	fileinfo.Init(cfg.Cfg.FileInfoCfgFile)
 
-	log.Println(fmt.Sprintf("[info] start corsair on %d ...", *flagPort))
+	log.Println(fmt.Sprintf("[info] start corsair on %d ...", cfg.Cfg.Port))
 
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
@@ -267,14 +267,16 @@ Golang Version: %s
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
 
 	http.HandleFunc(*cfgAPI, func(w http.ResponseWriter, r *http.Request) {
-		hostName, err := os.Hostname()
-		if err != nil {
-			log.Printf("[error] %s, ignored", err.Error())
-		} else {
-			cloudcare.HostName = hostName // 每次该接口被调用时, 都尝试更新一下全局的 hostname(在运行期间可能变更)
-		}
 
 		if cfg.Cfg.GroupName == "" { // GroupName 默认为探针运行所在机器的 hostname
+
+			hostName, err := os.Hostname()
+			if err != nil {
+				log.Printf("[error] %s, ignored", err.Error())
+			} else {
+				cloudcare.HostName = hostName
+			}
+
 			cfg.Cfg.GroupName = hostName
 		}
 
@@ -302,6 +304,6 @@ Golang Version: %s
 
 	defer l.Close()
 	if err := http.Serve(l, nil); err != nil {
-		log.Printf("[fatal]", err)
+		log.Println("[fatal]", err)
 	}
 }
