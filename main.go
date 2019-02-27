@@ -31,6 +31,7 @@ import (
 	"github.com/prometheus/node_exporter/fileinfo"
 	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/node_exporter/handler"
+	"github.com/prometheus/node_exporter/utils"
 	"github.com/satori/go.uuid"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -121,7 +122,7 @@ func initCfg() error {
 	if *flagSK == "" {
 		log.Fatalln("[fatal] invalid sk")
 	} else {
-		cfg.Cfg.SK = cfg.XorEncode(*flagSK)
+		cfg.Cfg.SK = utils.XorEncode(*flagSK)
 	}
 
 	cfg.Cfg.Port = *flagPort
@@ -181,13 +182,13 @@ func main() {
 	kingpin.Parse()
 
 	if len(*flagEnSK) > 0 {
-		enSk := cfg.XorEncode(*flagEnSK)
+		enSk := utils.XorEncode(*flagEnSK)
 		fmt.Println(enSk)
 		return
 	}
 
 	if len(*flagDeSK) > 0 {
-		deSk := cfg.XorDecode(*flagDeSK)
+		deSk := utils.XorDecode(*flagDeSK)
 		fmt.Println(string(deSk))
 		return
 	}
