@@ -2,32 +2,39 @@
 
 default: local
 
+BIN = corsair
+NAME = corsair
+
 # devops 测试环境
 TEST_KODO_HOST = http://kodo-testing.prof.wang
-TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/test
+TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/${NAME}/test
 TEST_SSL = 0
 TEST_PORT = 80
 
+# 预发环境
+PREPROD_KODO_HOST = http://kodo-preprod.prof.wang
+PREPROD_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/${NAME}/preprod
+PREPROD_SSL = 0
+PREPROD_PORT = 80
+
 # 本地搭建的 kodo 测试(XXX: 自行绑定下这个域名到某个地址)
 LOCAL_KODO_HOST = http://kodo-testing.prof.wang:9527
-LOCAL_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/local
+LOCAL_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/${NAME}/local
 LOCAL_SSL = 0
 LOCAL_PORT = 80
 
 # 正式环境
 RELEASE_KODO_HOST = https://kodo.prof.wang
-RELEASE_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/release
+RELEASE_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/${NAME}/release
 RELEASE_SSL = 1
 RELEASE_PORT = 443
 
 PUB_DIR = pub
-BIN = corsair
-NAME = corsair
 ENTRY = main.go
 
 VERSION := $(shell git describe --always --tags)
 
-all: test release preprod local alpha
+all: test release pre local alpha
 
 local:
 	@echo "===== $(BIN) local ===="
@@ -58,7 +65,7 @@ release:
 	tree -Csh $(PUB_DIR)
 
 test:
-	@echo "===== agent test ===="
+	@echo "===== ${NAME} test ===="
 	@rm -rf $(PUB_DIR)/test
 	@mkdir -p build $(PUB_DIR)/test
 	@mkdir -p git
@@ -71,17 +78,35 @@ test:
 	@tar czf $(PUB_DIR)/test/$(NAME)-$(VERSION).tar.gz -C build .
 	tree -Csh $(PUB_DIR)
 
+pre:
+	@echo "===== ${NAME} preprod ===="
+	@rm -rf $(PUB_DIR)/preprod
+	@mkdir -p build $(PUB_DIR)/preprod
+	@mkdir -p git
+	@echo 'package git; const (Sha1 string=""; BuildAt string=""; Version string=""; Golang string="")' > git/git.go
+	@go run make.go -main $(ENTRY) -binary $(BIN) -name $(NAME) -build-dir build -archs "linux/amd64" -cgo \
+		-kodo-host $(PREPROD_KODO_HOST) -download-addr $(PREPROD_DOWNLOAD_ADDR) -ssl $(PREPROD_SSL) -port $(PREPROD_PORT) \
+		-release preprod -pub-dir $(PUB_DIR)
+	@strip build/$(NAME)-linux-amd64/$(BIN)
+	@cp osqueryd env.json fileinfo.json build/$(NAME)-linux-amd64
+	@tar czf $(PUB_DIR)/preprod/$(NAME)-$(VERSION).tar.gz -C build .
+	tree -Csh $(PUB_DIR)
+
 pub_local:
-	@echo "publish local agent ..."
+	@echo "publish local ${NAME} ..."
 	@go run make.go -pub -release local -pub-dir $(PUB_DIR) -name $(NAME)
 
 pub_test:
-	@echo "publish test agent ..."
+	@echo "publish test ${NAME} ..."
 	@go run make.go -pub -release test -pub-dir $(PUB_DIR) -name $(NAME)
 
 pub_release:
-	@echo "publish release agent ..."
+	@echo "publish release ${NAME} ..."
 	@go run make.go -pub -release release -pub-dir $(PUB_DIR) -name $(NAME)
+
+pub_pre:
+	@echo "publish preprod ${NAME} ..."
+	@go run make.go -pub -release preprod -pub-dir $(PUB_DIR) -name $(NAME)
 
 clean:
 	rm -rf build/*
