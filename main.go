@@ -31,6 +31,7 @@ import (
 	"github.com/prometheus/node_exporter/fileinfo"
 	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/node_exporter/handler"
+	"github.com/prometheus/node_exporter/utils"
 	"github.com/satori/go.uuid"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -40,7 +41,7 @@ var (
 	envInfoPath  = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/env_infos").String()
 	fileInfoPath = kingpin.Flag("web.telemetry-file-info-path", "Path under which to expose file info.").Default("/file_infos").String()
 
-	metaPath = kingpin.Flag("web.meta-path", "Path under which to expose meta info.").Default("/meta").String()
+	cfgAPI = kingpin.Flag("web.meta-path", "Path under which to expose meta info.").Default("/config").String()
 
 	disableExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).").Bool()
 
@@ -48,6 +49,9 @@ var (
 	flagInit       = kingpin.Flag("init", `init collector`).Bool()
 	flagUpgrade    = kingpin.Flag("upgrade", ``).Bool()
 	flagHost       = kingpin.Flag("host", `eg. ip addr`).Default(cfg.Cfg.Host).String()
+
+	flagGroupName = kingpin.Flag(`group-name`, `group name`).Default(cfg.Cfg.GroupName).String()
+
 	flagRemoteHost = kingpin.Flag("remote-host", `data bridge addr`).Default(cfg.Cfg.RemoteHost).String()
 
 	flagScrapeMetricInterval = kingpin.Flag("scrape-metric-interval",
@@ -92,11 +96,13 @@ func initCfg() error {
 	cfg.Cfg.ScrapeFileInfoInterval = *flagScrapeFileInfoInterval
 	cfg.Cfg.EnableAll = *flagEnableAllCollectors
 
-	// unique-id 为必填参数
-	if *flagTeamID == "" {
-		log.Fatalln("[fatal] invalid team-id")
-	} else {
+	// 单机模式下，team-id 为必填参数
+	if *flagTeamID != "" {
 		cfg.Cfg.TeamID = *flagTeamID
+	} else {
+		if *flagSingleMode == 1 {
+			log.Fatal("--team-id required")
+		}
 	}
 
 	// 客户端自行生成 ID, 而不是 kodo 下发
@@ -116,7 +122,7 @@ func initCfg() error {
 	if *flagSK == "" {
 		log.Fatalln("[fatal] invalid sk")
 	} else {
-		cfg.Cfg.SK = cfg.XorEncode(*flagSK)
+		cfg.Cfg.SK = utils.XorEncode(*flagSK)
 		cfg.DecodedSK = *flagSK
 	}
 
@@ -188,13 +194,13 @@ func main() {
 	kingpin.Parse()
 
 	if len(*flagEnSK) > 0 {
-		enSk := cfg.XorEncode(*flagEnSK)
+		enSk := utils.XorEncode(*flagEnSK)
 		fmt.Println(enSk)
 		return
 	}
 
 	if len(*flagDeSK) > 0 {
-		deSk := cfg.XorDecode(*flagDeSK)
+		deSk := utils.XorDecode(*flagDeSK)
 		fmt.Println(string(deSk))
 		return
 	}
@@ -274,17 +280,23 @@ Golang Version: %s
 	http.Handle(*fileInfoPath, handler.NewFileInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
 
-	http.HandleFunc(*metaPath, func(w http.ResponseWriter, r *http.Request) {
-		hostName, err := os.Hostname()
-		if err != nil {
-			log.Printf("[error] %s, ignored", err.Error())
-		} else {
-			cloudcare.HostName = hostName // 每次该接口被调用时, 都尝试更新一下全局的 hostname(在运行期间可能变更)
+	http.HandleFunc(*cfgAPI, func(w http.ResponseWriter, r *http.Request) {
+
+		if cfg.Cfg.GroupName == "" { // GroupName 默认为探针运行所在机器的 hostname
+
+			hostName, err := os.Hostname()
+			if err != nil {
+				log.Printf("[error] %s, ignored", err.Error())
+			} else {
+				cloudcare.HostName = hostName
+			}
+
+			cfg.Cfg.GroupName = hostName
 		}
 
 		j, err := json.Marshal(&cfg.Meta{
 			UploaderUID: cfg.Cfg.UploaderUID,
-			GroupName:   cloudcare.HostName,
+			GroupName:   cfg.Cfg.GroupName,
 		})
 
 		if err != nil {
