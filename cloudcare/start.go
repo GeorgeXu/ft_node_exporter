@@ -36,7 +36,7 @@ func AddTags(s *model.Sample) {
 
 func Start(remoteHost string, scrapehost string, interval int64) error {
 
-	s, err := NewStorage(remoteHost, time.Duration(60*time.Second))
+	s, err := NewStorage(remoteHost, time.Duration(time.Duration(interval)*time.Millisecond))
 	if err != nil {
 		return err
 	}

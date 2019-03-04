@@ -27,7 +27,7 @@ LOG="${INSTALL_DIR}/${SERVICE}".log
 start() {
 
     printf "$SERVICE starting... "
-    (${BINARY} -cfg "${YAML_CFG}" &) # run in backend
+    (${BINARY} --cfg "${YAML_CFG}" &) # run in backend
 
     for i in {1..5}
     do
