@@ -177,6 +177,13 @@ func main() {
 	//log.SetFlags(log.Llongfile | log.LstdFlags)
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
+	logfilepath := "/usr/local/cloudcare/corsair/corsair.log"
+	rw, err := cloudcare.SetLog(logfilepath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rw.Close()
+
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
