@@ -144,8 +144,6 @@ func compileArch(bin, goos, goarch, dir string) {
 	// 	env = append(env, "CGO_ENABLED=0")
 	// }
 
-	_ = env
-
 	runEnv(args, env)
 }
 
