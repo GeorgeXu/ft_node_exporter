@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -92,11 +93,80 @@ var (
 	storeTotal = 0
 )
 
+func CheckProbeLimit() error {
+
+	data := []byte("")
+	compressed := snappy.Encode(nil, data)
+
+	requrl := cfg.Cfg.RemoteHost
+	if requrl[len(requrl)-1] == '/' {
+		requrl = requrl[:len(requrl)-1]
+	}
+	requrl = requrl + "/v1/issue-source"
+
+	httpReq, err := http.NewRequest("POST", requrl, bytes.NewReader(compressed))
+	if err != nil {
+		return err
+	}
+
+	contentType := "application/x-protobuf"
+	contentEncode := "snappy"
+	date := time.Now().UTC().Format(http.TimeFormat)
+
+	sig := calcSig(nil, contentType,
+		date, cfg.Cfg.TeamID, http.MethodPost, cfg.DecodedSK)
+
+	httpReq.Header.Add("Content-Encoding", contentEncode)
+	httpReq.Header.Set("Content-Type", contentType)
+	httpReq.Header.Set("X-Version", cfg.ProbeName+"/"+git.Version)
+	httpReq.Header.Set("X-Team-Id", cfg.Cfg.TeamID)
+	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
+	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
+	//httpReq.Header.Set("X-Hostname", HostName)
+	httpReq.Header.Set("Date", date)
+	httpReq.Header.Set("Authorization", "corsair "+cfg.Cfg.AK+":"+sig)
+
+	httpResp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		// Errors from client.Do are from (for example) network errors, so are
+		// recoverable.
+		return err
+	}
+	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode == 404 {
+		return fmt.Errorf("page not found: %s", requrl)
+	}
+
+	resdata, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
+		return err
+	}
+
+	m := make(map[string]string)
+
+	err = json.Unmarshal(resdata, &m)
+	if err != nil {
+		return err
+	}
+
+	e, ok := m["error"]
+	if !ok {
+		return fmt.Errorf("invalid response: %s", string(resdata))
+	}
+
+	if e != "" {
+		return fmt.Errorf("%s", e)
+	}
+
+	return nil
+}
+
 func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
 	data, err := proto.Marshal(req)
 	if err != nil {
-		log.Printf("[error] %s", err.Error())
+		//log.Printf("[error] %s", err.Error())
 		return err
 	}
 
@@ -104,12 +174,11 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	httpReq, err := http.NewRequest("POST", c.url.String(), bytes.NewReader(compressed))
 	if err != nil {
 		// Errors from NewRequest are from unparseable URLs, so are not recoverable.
-		log.Printf("[error] %s", err.Error())
+		//log.Printf("[error] %s", err.Error())
 		return err
 	}
 
-	log.Printf("[debug] snappy ratio: %d/%d=%f%%",
-		len(compressed), len(data), (1.0-float64(len(compressed))/float64(len(data)))*100.0)
+	//log.Printf("[debug] snappy ratio: %d/%d=%f%%",len(compressed), len(data), (1.0-float64(len(compressed))/float64(len(data)))*100.0)
 
 	contentType := "application/x-protobuf"
 	contentEncode := "snappy"

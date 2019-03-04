@@ -43,6 +43,12 @@ type Meta struct {
 	GroupName   string `json:"group_name"`
 }
 
+const (
+	InstallDir     = `/usr/local/cloudcare/`
+	ProbeName      = `corsair`
+	DefaultCfgPath = InstallDir + ProbeName + "/" + ProbeName + ".yml"
+)
+
 var (
 	Cfg = Config{
 		QueueCfg: map[string]int{
@@ -56,15 +62,14 @@ var (
 		SingleMode:             1,
 		EnableAll:              1,
 		Port:                   9100,
-		EnvCfgFile:             `/usr/local/cloudcare/env.json`,
-		FileInfoCfgFile:        `/usr/local/cloudcare/fileinfo.json`,
+		EnvCfgFile:             InstallDir + ProbeName + "/env.json",
+		FileInfoCfgFile:        InstallDir + ProbeName + "/fileinfo.json",
 		ScrapeMetricInterval:   60000,
 		ScrapeEnvInfoInterval:  900000,
 		ScrapeFileInfoInterval: 86400000,
 	}
 
 	DecodedSK = ""
-	ProbeName = `corsair`
 )
 
 // 导入 @f 中的配置

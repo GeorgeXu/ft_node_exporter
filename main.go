@@ -67,10 +67,10 @@ var (
 	flagTeamID      = kingpin.Flag("team-id", "User ID").String()
 	flagAK          = kingpin.Flag("ak", `Access Key`).String()
 	flagSK          = kingpin.Flag("sk", `Secret Key`).String()
-	flagCfgFile     = kingpin.Flag("cfg", `configure file`).Default("/usr/local/cloudcare/corsair.yml").String()
+	flagCfgFile     = kingpin.Flag("cfg", `configure file`).Default(cfg.DefaultCfgPath).String()
 	flagVersionInfo = kingpin.Flag("version", "show version info").Bool()
 	flagCheck       = kingpin.Flag("check", "check if ok").Default("0").Int()
-	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default("/usr/local/cloudcare").String()
+	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default(cfg.InstallDir + cfg.ProbeName).String()
 
 	flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
 
@@ -117,6 +117,7 @@ func initCfg() error {
 		log.Fatalln("[fatal] invalid sk")
 	} else {
 		cfg.Cfg.SK = cfg.XorEncode(*flagSK)
+		cfg.DecodedSK = *flagSK
 	}
 
 	cfg.Cfg.Port = *flagPort
@@ -132,12 +133,16 @@ func initCfg() error {
 		}
 	}
 
+	if err := cloudcare.CheckProbeLimit(); err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+
 	return cfg.DumpConfig(*flagCfgFile)
 }
 
 func probeCheck() error {
-	url := fmt.Sprintf("%s/v1/probe/check?team_id=%s&probe=corsair&uploader_uid=%s",
-		cfg.Cfg.RemoteHost, cfg.Cfg.TeamID, cfg.Cfg.UploaderUID)
+	url := fmt.Sprintf("%s/v1/probe/check?team_id=%s&probe=%s&uploader_uid=%s",
+		cfg.Cfg.RemoteHost, cfg.Cfg.TeamID, cfg.ProbeName, cfg.Cfg.UploaderUID)
 
 	resp, err := http.Get(url)
 	if err != nil { // 可能网络不通
@@ -204,7 +209,9 @@ Golang Version: %s
 		return
 	}
 
-	cfg.LoadConfig(*flagCfgFile)
+	if err := cfg.LoadConfig(*flagCfgFile); err != nil {
+		log.Fatalf("[fatal] load config failed: %s", err)
+	}
 	cfg.DumpConfig(*flagCfgFile) // load 过程中可能会修改 cfg.Cfg, 需重新写入
 
 	if *flagCheck != 0 {
@@ -234,7 +241,7 @@ Golang Version: %s
 		}
 
 		// env info 收集器
-		getURLEnv := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *envInfoPath)
+		getURLEnv := fmt.Sprintf("http://0.0.0.0:%d%s?format=json", cfg.Cfg.Port, *envInfoPath)
 
 		log.Printf("[debug] env-info url: %s", getURLEnv)
 
@@ -270,7 +277,7 @@ Golang Version: %s
 
 		j, err := json.Marshal(&cfg.Meta{
 			UploaderUID: cfg.Cfg.UploaderUID,
-			GroupName:   hostName,
+			GroupName:   cloudcare.HostName,
 		})
 
 		if err != nil {
@@ -288,6 +295,10 @@ Golang Version: %s
 	l, err := net.Listen(`tcp`, listenAddress)
 	if err != nil {
 		log.Fatalf("[fatal] %s", err.Error())
+	}
+
+	if err := cloudcare.DumpPID(); err != nil {
+		log.Fatalf("dump pid faile: %s", err)
 	}
 
 	defer l.Close()
