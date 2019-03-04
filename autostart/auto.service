@@ -1,0 +1,18 @@
+#
+# systemd serivce setting
+#
+[Unit]
+Description=cloudcare corsair
+After=network.target
+
+[Service]
+Environment=HOME=/root
+WorkingDirectory=/usr/local/cloudcare/corsair
+ExecReload=/bin/kill -2 $MAINPID
+KillMode=process
+Restart=always
+RestartSec=3s
+ExecStart=/usr/local/cloudcare/corsair/corsair -cfg /usr/local/cloudcare/corsair/corsair.yaml
+
+[Install]
+WantedBy=default.target
