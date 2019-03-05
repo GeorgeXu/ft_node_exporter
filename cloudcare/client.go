@@ -122,7 +122,7 @@ func CheckProbeLimit() error {
 	httpReq.Header.Set("X-Team-Id", cfg.Cfg.TeamID)
 	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
 	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
-	//httpReq.Header.Set("X-Hostname", HostName)
+	httpReq.Header.Set("X-Host-Name", HostName)
 	httpReq.Header.Set("Date", date)
 	httpReq.Header.Set("Authorization", "corsair "+cfg.Cfg.AK+":"+sig)
 
@@ -186,6 +186,8 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
 	sig := calcSig(compressed, contentType,
 		date, cfg.Cfg.TeamID, http.MethodPost, cfg.DecodedSK)
+
+	log.Println("HostName: ", HostName)
 
 	httpReq.Header.Add("Content-Encoding", contentEncode)
 	httpReq.Header.Set("Content-Type", contentType)

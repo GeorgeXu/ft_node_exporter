@@ -48,7 +48,7 @@ var (
 	flagSingleMode = kingpin.Flag("single-mode", "run as single node").Default(fmt.Sprintf("%d", cfg.Cfg.SingleMode)).Int()
 	flagInit       = kingpin.Flag("init", `init collector`).Bool()
 	flagUpgrade    = kingpin.Flag("upgrade", ``).Bool()
-	flagHost       = kingpin.Flag("host", `eg. ip addr`).Default(cfg.Cfg.Host).String()
+	flagHost       = kingpin.Flag("host", `eg. ip addr`).Default().String()
 
 	flagGroupName = kingpin.Flag(`group-name`, `group name`).Default(cfg.Cfg.GroupName).String()
 
@@ -61,7 +61,7 @@ var (
 	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval",
 		"frequency to upload file info data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeFileInfoInterval)).Int()
 
-	flagPort = kingpin.Flag("port", `web listen port`).Default(fmt.Sprintf("%d", cfg.Cfg.Port)).Int()
+	flagPort = kingpin.Flag("port", `web listen port`).Int()
 
 	flagEnvCfg      = kingpin.Flag("env-cfg", "env-collector configure").Default(cfg.Cfg.EnvCfgFile).String()
 	flagFileInfoCfg = kingpin.Flag("fileinfo-cfg", "fileinfo-collector configure").Default(cfg.Cfg.FileInfoCfgFile).String()
