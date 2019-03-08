@@ -39,9 +39,9 @@ type Meta struct {
 }
 
 const (
-	InstallDir     = `/usr/local/cloudcare/`
-	ProbeName      = `corsair`
-	DefaultCfgPath = InstallDir + ProbeName + "/" + ProbeName + ".yml"
+	InstallDir     = `/usr/local/cloudcare/profwang/`
+	ProbeName      = `profwang_probe`
+	DefaultCfgPath = InstallDir + ProbeName + ".yml"
 )
 
 var (
@@ -57,8 +57,8 @@ var (
 		SingleMode:             1,
 		EnableAll:              1,
 		Port:                   9100,
-		EnvCfgFile:             InstallDir + ProbeName + "/env.json",
-		FileInfoCfgFile:        InstallDir + ProbeName + "/fileinfo.json",
+		EnvCfgFile:             InstallDir + "env.json",
+		FileInfoCfgFile:        InstallDir + "fileinfo.json",
 		ScrapeMetricInterval:   60000,
 		ScrapeEnvInfoInterval:  900000,
 		ScrapeFileInfoInterval: 86400000,

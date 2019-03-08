@@ -93,7 +93,13 @@ var (
 	storeTotal = 0
 )
 
-func CheckProbeLimit() error {
+type issueResp struct {
+	Code      int    `json:"code"`
+	ErrorCode string `json:"errorCode"`
+	Message   string `json:"message"`
+}
+
+func CreateIssueSource(check bool) error {
 
 	data := []byte("")
 	compressed := snappy.Encode(nil, data)
@@ -102,7 +108,12 @@ func CheckProbeLimit() error {
 	if requrl[len(requrl)-1] == '/' {
 		requrl = requrl[:len(requrl)-1]
 	}
-	requrl = requrl + "/v1/issue-source"
+
+	if check {
+		requrl = requrl + fmt.Sprintf("/v1/uploader-uid/%s", cfg.Cfg.UploaderUID)
+	} else {
+		requrl = requrl + "/v1/issue-source"
+	}
 
 	httpReq, err := http.NewRequest("POST", requrl, bytes.NewReader(compressed))
 	if err != nil {
@@ -123,16 +134,19 @@ func CheckProbeLimit() error {
 	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
 	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
 	httpReq.Header.Set("X-Host-Name", HostName)
+	httpReq.Header.Set("X-App-Name", cfg.ProbeName)
 	httpReq.Header.Set("Date", date)
-	httpReq.Header.Set("Authorization", "corsair "+cfg.Cfg.AK+":"+sig)
+	httpReq.Header.Set("Authorization", "kodo "+cfg.Cfg.AK+":"+sig)
 
 	httpResp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
-		// Errors from client.Do are from (for example) network errors, so are
-		// recoverable.
 		return err
 	}
 	defer httpResp.Body.Close()
+
+	if check && httpResp.StatusCode == 200 {
+		return nil
+	}
 
 	if httpResp.StatusCode == 404 {
 		return fmt.Errorf("page not found: %s", requrl)
@@ -143,20 +157,16 @@ func CheckProbeLimit() error {
 		return err
 	}
 
-	m := make(map[string]string)
+	var m issueResp
 
 	err = json.Unmarshal(resdata, &m)
 	if err != nil {
 		return err
 	}
 
-	e, ok := m["error"]
-	if !ok {
-		return fmt.Errorf("invalid response: %s", string(resdata))
-	}
-
-	if e != "" {
-		return fmt.Errorf("%s", e)
+	if m.Code != 200 {
+		log.Printf("resp: %s", string(resdata))
+		return fmt.Errorf("%s", m.Message)
 	}
 
 	return nil
@@ -196,8 +206,9 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
 	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
 	httpReq.Header.Set("X-Host-Name", HostName)
+	httpReq.Header.Set("X-App-Name", cfg.ProbeName)
 	httpReq.Header.Set("Date", date)
-	httpReq.Header.Set("Authorization", "corsair "+cfg.Cfg.AK+":"+sig)
+	httpReq.Header.Set("Authorization", "kodo "+cfg.Cfg.AK+":"+sig)
 	httpReq = httpReq.WithContext(ctx)
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)

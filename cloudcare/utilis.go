@@ -14,7 +14,7 @@ import (
 func DumpPID() error {
 	pid := os.Getpid()
 
-	pidfile := fmt.Sprintf("%s/%s.pid", cfg.InstallDir+cfg.ProbeName, cfg.ProbeName)
+	pidfile := fmt.Sprintf("%s%s.pid", cfg.InstallDir, cfg.ProbeName)
 	return ioutil.WriteFile(pidfile, []byte(fmt.Sprintf("%d", pid)), 0664)
 }
 

@@ -6,7 +6,7 @@
 # description: node exporter service
 
 ### BEGIN INIT INFO
-# Provides: corsair
+# Provides: profwang_probe
 # Required-Start: $network
 # Required-Stop: $network
 # Default-Start: 2 3 4 5
@@ -17,8 +17,8 @@
 #   2. custom env info
 ### END INIT INFO
 
-SERVICE=corsair
-INSTALL_DIR="/usr/local/cloudcare/${SERVICE}"
+SERVICE=profwang_probe
+INSTALL_DIR="/usr/local/cloudcare/profwang"
 BINARY="${INSTALL_DIR}/${SERVICE}"
 YAML_CFG="${INSTALL_DIR}/${SERVICE}.yml"
 PID="${INSTALL_DIR}/${SERVICE}".pid

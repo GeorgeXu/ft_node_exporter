@@ -26,8 +26,8 @@ RELEASE_SSL = 1
 RELEASE_PORT = 443
 
 PUB_DIR = pub
-BIN = corsair
-NAME = corsair
+BIN = profwang_probe
+NAME = profwang_probe
 ENTRY = main.go
 
 VERSION := $(shell git describe --always --tags)

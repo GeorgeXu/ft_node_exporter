@@ -6,11 +6,11 @@
 dl_url="http://{{.DownloadAddr}}/{{.Name}}-{{.Version}}.tar.gz"
 
 remote_host={{.KodoHost}}
-bin_name="corsair"
-service_name="corsair"
+bin_name="profwang_probe"
+service_name="profwang_probe"
 
 # 安装目录设置
-install_dir="/usr/local/cloudcare/${service_name}"
+install_dir="/usr/local/cloudcare/profwang"
 pid_file="${install_dir}/${bin_name}".pid
 yml_cfg="${install_dir}/${bin_name}".yml
 binary="${install_dir}/${bin_name}"

@@ -2,17 +2,17 @@
 # systemd serivce setting
 #
 [Unit]
-Description=cloudcare corsair
+Description=cloudcare profwang_probe
 After=network.target
 
 [Service]
 Environment=HOME=/root
-WorkingDirectory=/usr/local/cloudcare/corsair
+WorkingDirectory=/usr/local/cloudcare/profwang
 ExecReload=/bin/kill -2 $MAINPID
 KillMode=process
 Restart=always
 RestartSec=3s
-ExecStart=/usr/local/cloudcare/corsair/corsair --cfg /usr/local/cloudcare/corsair/corsair.yml
+ExecStart=/usr/local/cloudcare/profwang/profwang_probe --cfg /usr/local/cloudcare/profwang/profwang_probe.yml
 
 [Install]
 WantedBy=default.target

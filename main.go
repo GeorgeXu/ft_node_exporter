@@ -22,7 +22,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/prometheus/node_exporter/cfg"
 	"github.com/prometheus/node_exporter/cloudcare"
@@ -32,7 +32,7 @@ import (
 	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/node_exporter/handler"
 	"github.com/prometheus/node_exporter/utils"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -45,10 +45,11 @@ var (
 
 	disableExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).").Bool()
 
-	flagSingleMode = kingpin.Flag("single-mode", "run as single node").Default(fmt.Sprintf("%d", cfg.Cfg.SingleMode)).Int()
-	flagInit       = kingpin.Flag("init", `init collector`).Bool()
-	flagUpgrade    = kingpin.Flag("upgrade", ``).Bool()
-	flagHost       = kingpin.Flag("host", `eg. ip addr`).Default().String()
+	flagSingleMode  = kingpin.Flag("single-mode", "run as single node").Default(fmt.Sprintf("%d", cfg.Cfg.SingleMode)).Int()
+	flagInit        = kingpin.Flag("init", `init collector`).Bool()
+	flagUpgrade     = kingpin.Flag("upgrade", ``).Bool()
+	flagHost        = kingpin.Flag("host", `eg. ip addr`).Default().String()
+	flagUploaderUID = kingpin.Flag("uploader-uid", `uuid`).Default().String()
 
 	flagGroupName = kingpin.Flag(`group-name`, `group name`).Default(cfg.Cfg.GroupName).String()
 
@@ -74,7 +75,7 @@ var (
 	flagCfgFile     = kingpin.Flag("cfg", `configure file`).Default(cfg.DefaultCfgPath).String()
 	flagVersionInfo = kingpin.Flag("version", "show version info").Bool()
 	flagCheck       = kingpin.Flag("check", "check if ok").Default("0").Int()
-	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default(cfg.InstallDir + cfg.ProbeName).String()
+	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default(cfg.InstallDir).String()
 
 	flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
 
@@ -105,14 +106,6 @@ func initCfg() error {
 		}
 	}
 
-	// 客户端自行生成 ID, 而不是 kodo 下发
-	uid, err := uuid.NewV4()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cfg.Cfg.UploaderUID = fmt.Sprintf("uid-%s", uid.String())
-
 	if *flagAK == "" {
 		log.Fatalln("[fatal] invalid ak")
 	} else {
@@ -127,6 +120,9 @@ func initCfg() error {
 	}
 
 	cfg.Cfg.Port = *flagPort
+	if cfg.Cfg.Port == 0 {
+		cfg.Cfg.Port = 9100
+	}
 	cfg.Cfg.EnvCfgFile = *flagEnvCfg
 	cfg.Cfg.FileInfoCfgFile = *flagFileInfoCfg
 	cfg.Cfg.Provider = *flagProvider
@@ -139,8 +135,25 @@ func initCfg() error {
 		}
 	}
 
-	if err := cloudcare.CheckProbeLimit(); err != nil {
-		log.Fatalf("%s", err.Error())
+	bcheck := false
+	if *flagUploaderUID != "" {
+		cfg.Cfg.UploaderUID = *flagUploaderUID
+		bcheck = true
+	} else {
+		// 客户端自行生成 ID, 而不是 kodo 下发
+		uid, err := uuid.NewV4()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cfg.Cfg.UploaderUID = fmt.Sprintf("uid-%s", uid.String())
+	}
+
+	if cfg.Cfg.SingleMode > 0 {
+		if err := cloudcare.CreateIssueSource(bcheck); err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+		//log.Println("reinstall ok")
 	}
 
 	return cfg.DumpConfig(*flagCfgFile)
@@ -183,7 +196,7 @@ func main() {
 	//log.SetFlags(log.Llongfile | log.LstdFlags)
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
-	logfilepath := "/usr/local/cloudcare/corsair/corsair.log"
+	logfilepath := fmt.Sprintf("%s%s.log", cfg.InstallDir, cfg.ProbeName)
 	rw, err := cloudcare.SetLog(logfilepath)
 	if err != nil {
 		log.Fatal(err)
@@ -227,23 +240,31 @@ Golang Version: %s
 	}
 	cfg.DumpConfig(*flagCfgFile) // load 过程中可能会修改 cfg.Cfg, 需重新写入
 
-	if *flagCheck != 0 {
-		if err := probeCheck(); err != nil {
-			log.Fatalf("[fatal] %s, exit now.", err.Error())
+	if cfg.Cfg.SingleMode > 0 {
+		//check-issue-source
+		if err := cloudcare.CreateIssueSource(false); err != nil {
+			log.Fatalln(err)
 		}
-		return
+		log.Println("[debug] avaiable uploader_uid")
 	}
 
+	// if *flagCheck != 0 {
+	// 	if err := probeCheck(); err != nil {
+	// 		log.Fatalf("[fatal] %s, exit now.", err.Error())
+	// 	}
+	// 	return
+	// }
+
 	// init envinfo configure
-	envinfo.OSQuerydPath = path.Join(*flagInstallDir, `osqueryd`)
+	envinfo.OSQuerydPath = filepath.Join(*flagInstallDir, `osqueryd`)
 	envinfo.Init(cfg.Cfg.EnvCfgFile)
 	fileinfo.Init(cfg.Cfg.FileInfoCfgFile)
 
-	log.Println(fmt.Sprintf("[info] start corsair on %d ...", cfg.Cfg.Port))
+	log.Println(fmt.Sprintf("[info] start on %d ...", cfg.Cfg.Port))
 
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
-		getURLMetric := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *metricsPath)
+		getURLMetric := fmt.Sprintf("http://localhost:%d%s", cfg.Cfg.Port, *metricsPath)
 
 		log.Printf("[debug] metric url: %s", getURLMetric)
 
@@ -254,7 +275,7 @@ Golang Version: %s
 		}
 
 		// env info 收集器
-		getURLEnv := fmt.Sprintf("http://0.0.0.0:%d%s?format=json", cfg.Cfg.Port, *envInfoPath)
+		getURLEnv := fmt.Sprintf("http://localhost:%d%s?format=json", cfg.Cfg.Port, *envInfoPath)
 
 		log.Printf("[debug] env-info url: %s", getURLEnv)
 
@@ -264,7 +285,7 @@ Golang Version: %s
 		}
 
 		// file info 收集器
-		getURLFile := fmt.Sprintf("http://0.0.0.0:%d%s", cfg.Cfg.Port, *fileInfoPath)
+		getURLFile := fmt.Sprintf("http://localhost:%d%s", cfg.Cfg.Port, *fileInfoPath)
 
 		log.Printf("[debug] env-info url: %s", getURLFile)
 
@@ -310,7 +331,7 @@ Golang Version: %s
 		}
 	})
 
-	listenAddress := fmt.Sprintf("0.0.0.0:%d", cfg.Cfg.Port)
+	listenAddress := fmt.Sprintf("localhost:%d", cfg.Cfg.Port)
 	l, err := net.Listen(`tcp`, listenAddress)
 	if err != nil {
 		log.Fatalf("[fatal] %s", err.Error())
