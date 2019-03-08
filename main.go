@@ -135,10 +135,11 @@ func initCfg() error {
 		}
 	}
 
-	bcheck := false
 	if *flagUploaderUID != "" {
 		cfg.Cfg.UploaderUID = *flagUploaderUID
-		bcheck = true
+		if !cloudcare.UploaderUidOK(*flagUploaderUID) {
+			os.Exit(-1)
+		}
 	} else {
 		// 客户端自行生成 ID, 而不是 kodo 下发
 		uid, err := uuid.NewV4()
@@ -147,13 +148,6 @@ func initCfg() error {
 		}
 
 		cfg.Cfg.UploaderUID = fmt.Sprintf("uid-%s", uid.String())
-	}
-
-	if cfg.Cfg.SingleMode > 0 {
-		if err := cloudcare.CreateIssueSource(bcheck); err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		//log.Println("reinstall ok")
 	}
 
 	return cfg.DumpConfig(*flagCfgFile)
@@ -238,22 +232,15 @@ Golang Version: %s
 	if err := cfg.LoadConfig(*flagCfgFile); err != nil {
 		log.Fatalf("[fatal] load config failed: %s", err)
 	}
+
 	cfg.DumpConfig(*flagCfgFile) // load 过程中可能会修改 cfg.Cfg, 需重新写入
 
 	if cfg.Cfg.SingleMode > 0 {
-		//check-issue-source
-		if err := cloudcare.CreateIssueSource(false); err != nil {
-			log.Fatalln(err)
+		// 单机模式下，无脑调用 create-issue-source 接口
+		if !cloudcare.CreateIssueSourceOK() {
+			os.Exit(-1)
 		}
-		log.Println("[debug] avaiable uploader_uid")
 	}
-
-	// if *flagCheck != 0 {
-	// 	if err := probeCheck(); err != nil {
-	// 		log.Fatalf("[fatal] %s, exit now.", err.Error())
-	// 	}
-	// 	return
-	// }
 
 	// init envinfo configure
 	envinfo.OSQuerydPath = filepath.Join(*flagInstallDir, `osqueryd`)

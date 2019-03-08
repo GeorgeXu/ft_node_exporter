@@ -153,7 +153,7 @@ done
 
 
 ########################################################
-# 停止当前正在运行的 corsair
+# 停止当前正在运行的 profwang_probe
 ########################################################
 services=(
 "${service_name}"
@@ -255,14 +255,14 @@ fi
 
 printf "starting ${service_name} ...\n" | tee -a ${install_log}
 ########################################################
-# start corsair and set to backend
+# start profwang_probe and set to backend
 # 经测试(Sat Nov 11 11:04:22 CST 2017):
 #   centos 6.8 是 old upstart 启动的
 #   centos 6.9 是 old upstart 启动的
-#    通过 status corsair 查看 corsair 运行状态
+#    通过 status profwang_probe 查看 profwang_probe 运行状态
 #   centos 7.2 是 systemd 启动的
 #   centos 7.3 是 systemd 启动的
-#    通过 systemctl status corsair 查看运行状况
+#    通过 systemctl status profwang_probe 查看运行状况
 #   ubuntu 14.04/16.04 是 new upstart 启动
 #   debian 8.9 是通过 systemd 启动的
 #   opensuse 13.1 是通过 systemd 启动的
