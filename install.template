@@ -242,18 +242,11 @@ else
 	printf "new ${service_name} download ok\n" | tee -a ${install_log}
 fi
 
-
-printf "checking ${service_name} ...\n" | tee -a ${install_log}
-
-# 先 check 一下
-if `${binary} --cfg "${yml_cfg}"  --check 1`; then
-    printf "checking pass\n" | tee -a ${install_log}
-else
-    printf "checking failed, exit now.\n" | tee -a ${install_log}
-		exit -1
-fi
-
 printf "starting ${service_name} ...\n" | tee -a ${install_log}
+
+(${binary} --cfg "${yml_cfg}" &> ${log} &)
+exit 0
+
 ########################################################
 # start profwang_probe and set to backend
 # 经测试(Sat Nov 11 11:04:22 CST 2017):

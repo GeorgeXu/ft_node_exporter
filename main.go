@@ -74,7 +74,6 @@ var (
 	flagSK          = kingpin.Flag("sk", `Secret Key`).String()
 	flagCfgFile     = kingpin.Flag("cfg", `configure file`).Default(cfg.DefaultCfgPath).String()
 	flagVersionInfo = kingpin.Flag("version", "show version info").Bool()
-	flagCheck       = kingpin.Flag("check", "check if ok").Default("0").Int()
 	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default(cfg.InstallDir).String()
 
 	flagProvider = kingpin.Flag("provider", "cloud service provider").Default("aliyun").String()
