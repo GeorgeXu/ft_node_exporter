@@ -180,6 +180,10 @@ func CreateIssueSourceOK() bool {
 		return false
 	}
 
+	if httpResp.StatusCode == 200 {
+		return true
+	}
+
 	defer httpResp.Body.Close()
 
 	resdata, err := ioutil.ReadAll(httpResp.Body)
@@ -196,7 +200,7 @@ func CreateIssueSourceOK() bool {
 		return false
 	}
 
-	log.Printf("[error] %s: %s", m.ErrorCode, m.Message)
+	log.Printf("[error] %+#v", m)
 
 	return false
 }
