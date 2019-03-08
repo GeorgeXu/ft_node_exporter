@@ -2,33 +2,33 @@
 
 default: local
 
+PUB_DIR = pub
+BIN = profwang_probe
+NAME = profwang_probe
+ENTRY = main.go
+
 # devops 测试环境
 TEST_KODO_HOST = http://kodo-testing.prof.wang
-TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/test
+TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/$(NAME)/test
 TEST_SSL = 0
 TEST_PORT = 80
 
 PREPROD_KODO_HOST = http://kodo-testing.prof.wang
-PREPROD_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/preprod
+PREPROD_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/$(NAME)/preprod
 PREPROD_SSL = 0
 PREPROD_PORT = 80
 
 # 本地搭建的 kodo 测试(XXX: 自行绑定下这个域名到某个地址)
 LOCAL_KODO_HOST = http://kodo-testing.prof.wang:9527
-LOCAL_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/local
+LOCAL_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/$(NAME)/local
 LOCAL_SSL = 0
 LOCAL_PORT = 80
 
 # 正式环境
 RELEASE_KODO_HOST = https://kodo.prof.wang
-RELEASE_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/corsair/release
+RELEASE_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/$(NAME)/release
 RELEASE_SSL = 1
 RELEASE_PORT = 443
-
-PUB_DIR = pub
-BIN = profwang_probe
-NAME = profwang_probe
-ENTRY = main.go
 
 VERSION := $(shell git describe --always --tags)
 
