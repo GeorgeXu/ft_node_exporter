@@ -247,7 +247,7 @@ func getCurrentVersionInfo(url string) *versionDesc {
 
 func releaseAgent() {
 	var ak, sk, bucket, ossHost, prefix string
-	objPath := *flagName + "/" + *flagRelease
+	objPath := *flagName + "/linux/" + *flagRelease
 
 	// 在你本地设置好这些 oss-key 环境变量
 	switch *flagRelease {
@@ -278,8 +278,8 @@ func releaseAgent() {
 		log.Fatalf("[fatal] %s", err)
 	}
 
-	// 请求线上的 corsair 版本信息
-	url := fmt.Sprintf("http://%s.%s/%s/%s/%s", bucket, ossHost, *flagName, *flagRelease, `version`)
+	// 请求线上版本信息
+	url := fmt.Sprintf("http://%s.%s/%s/%s/%s", bucket, ossHost, *flagName, `linux/`+*flagRelease, `version`)
 	curVd := getCurrentVersionInfo(url)
 
 	if curVd != nil {
