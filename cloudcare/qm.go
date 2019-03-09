@@ -258,18 +258,19 @@ func (s *shards) runShard(i int) {
 }
 
 func (s *shards) sendSamples(samples model.Samples) {
-	start := time.Now()
+	//start := time.Now()
 	s.sendSamplesWithBackoff(samples)
-	log.Printf("[debug] send samples elapsed %v", time.Since(start))
+	//log.Printf("[debug] send samples elapsed %v", time.Since(start))
 }
 
 // send samples to the remote storage with backoff for recoverable errors.
 func (s *shards) sendSamplesWithBackoff(samples model.Samples) {
 	req := ToWriteRequest(samples)
+	var err error
 
 	for retries := cfg.Cfg.QueueCfg[`max_retries`]; retries > 0; retries-- {
 
-		err := s.qm.client.Store(s.ctx, req)
+		err = s.qm.client.Store(s.ctx, req)
 
 		if err == nil {
 			return

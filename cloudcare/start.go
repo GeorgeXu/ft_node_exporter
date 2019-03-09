@@ -2,7 +2,6 @@ package cloudcare
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -27,7 +26,7 @@ func init() {
 	var err error
 	HostName, err = os.Hostname()
 	if err != nil {
-		log.Printf("[error] %s, ignored", err.Error())
+		log.Printf("[error] get host name faiel: %s", err.Error())
 	}
 }
 
@@ -37,13 +36,15 @@ func AddTags(s *model.Sample) {
 
 func Start(remoteHost string, scrapehost string, interval int64) error {
 
-	s, err := NewStorage(remoteHost, time.Duration(60*time.Second))
+	s, err := NewStorage(remoteHost, time.Duration(time.Duration(interval)*time.Millisecond))
 	if err != nil {
 		return err
 	}
 
 	var f rtpanic.RecoverCallback
 	f = func(_ []byte, _ error) {
+
+		time.Sleep(time.Second * 1)
 
 		defer rtpanic.Recover(f, nil)
 
@@ -64,7 +65,7 @@ func Start(remoteHost string, scrapehost string, interval int64) error {
 			contentType, err := sp.scrape(&buf, scrapehost)
 
 			if err != nil {
-				fmt.Println("[error] scrape error:", err)
+				log.Println("[error] scrape error:", err)
 			} else {
 				sp.appendScrape(buf.Bytes(), contentType, start)
 			}

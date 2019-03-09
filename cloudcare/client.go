@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -92,11 +93,123 @@ var (
 	storeTotal = 0
 )
 
+type issueResp struct {
+	Code      int    `json:"code"`
+	ErrorCode string `json:"errorCode"`
+	Message   string `json:"message"`
+}
+
+func UploaderUidOK(uid string) bool {
+	requrl := cfg.Cfg.RemoteHost + fmt.Sprintf("/v1/uploader-uid/check?uid=%s", cfg.Cfg.UploaderUID)
+	httpReq, err := http.NewRequest(http.MethodGet, requrl, nil)
+	if err != nil {
+		log.Printf("[error] %s", err.Error())
+		return false
+	}
+
+	date := time.Now().UTC().Format(http.TimeFormat)
+
+	sig := calcSig(nil, "", date, cfg.Cfg.TeamID, http.MethodGet, cfg.DecodedSK)
+
+	httpReq.Header.Set("X-Version", cfg.ProbeName+"/"+git.Version)
+	httpReq.Header.Set("X-Team-Id", cfg.Cfg.TeamID)
+	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
+	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
+	httpReq.Header.Set("X-Host-Name", HostName)
+	httpReq.Header.Set("X-App-Name", cfg.ProbeName)
+	httpReq.Header.Set("Date", date)
+	httpReq.Header.Set("Authorization", "kodo "+cfg.Cfg.AK+":"+sig)
+
+	httpResp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		log.Printf("[error] %s", err.Error())
+		return false
+	}
+
+	if httpResp.StatusCode == 200 {
+		return true
+	}
+
+	defer httpResp.Body.Close()
+
+	resdata, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
+		log.Printf("[error] %s", err.Error())
+		return false
+	}
+
+	var m issueResp
+
+	err = json.Unmarshal(resdata, &m)
+	if err != nil {
+		log.Printf("[error] %s", err.Error())
+		return false
+	}
+
+	log.Printf("[error] %s: %s", m.ErrorCode, m.Message)
+
+	return false
+}
+
+func CreateIssueSourceOK() bool {
+
+	requrl := cfg.Cfg.RemoteHost + "/v1/issue-source?is_ftagent=false"
+
+	httpReq, err := http.NewRequest("POST", requrl, nil)
+	if err != nil {
+		log.Printf("[error] %s", err.Error())
+		return false
+	}
+
+	date := time.Now().UTC().Format(http.TimeFormat)
+
+	sig := calcSig(nil, "", date, cfg.Cfg.TeamID, http.MethodPost, cfg.DecodedSK)
+
+	httpReq.Header.Set("X-Version", cfg.ProbeName+"/"+git.Version)
+	httpReq.Header.Set("X-Team-Id", cfg.Cfg.TeamID)
+	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
+	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
+	httpReq.Header.Set("X-Host-Name", HostName)
+	httpReq.Header.Set("X-App-Name", cfg.ProbeName)
+	httpReq.Header.Set("Date", date)
+	httpReq.Header.Set("Authorization", "kodo "+cfg.Cfg.AK+":"+sig)
+
+	httpResp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		log.Printf("[error] %s", err.Error())
+		return false
+	}
+
+	if httpResp.StatusCode == 200 {
+		return true
+	}
+
+	defer httpResp.Body.Close()
+
+	resdata, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
+		log.Printf("[error] %s", err.Error())
+		return false
+	}
+
+	var m issueResp
+
+	err = json.Unmarshal(resdata, &m)
+	if err != nil {
+		log.Printf("[error] %s", err.Error())
+		return false
+	}
+
+	log.Printf("[error] %+#v", m)
+
+	return false
+}
+
 func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 
 	data, err := proto.Marshal(req)
 	if err != nil {
-		log.Printf("[error] %s", err.Error())
+		//log.Printf("[error] %s", err.Error())
 		return err
 	}
 
@@ -104,12 +217,11 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	httpReq, err := http.NewRequest("POST", c.url.String(), bytes.NewReader(compressed))
 	if err != nil {
 		// Errors from NewRequest are from unparseable URLs, so are not recoverable.
-		log.Printf("[error] %s", err.Error())
+		//log.Printf("[error] %s", err.Error())
 		return err
 	}
 
-	log.Printf("[debug] snappy ratio: %d/%d=%f%%",
-		len(compressed), len(data), (1.0-float64(len(compressed))/float64(len(data)))*100.0)
+	//log.Printf("[debug] snappy ratio: %d/%d=%f%%",len(compressed), len(data), (1.0-float64(len(compressed))/float64(len(data)))*100.0)
 
 	contentType := "application/x-protobuf"
 	contentEncode := "snappy"
@@ -118,15 +230,18 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	sig := calcSig(compressed, contentType,
 		date, cfg.Cfg.TeamID, http.MethodPost, cfg.DecodedSK)
 
+	log.Println("HostName: ", HostName)
+
 	httpReq.Header.Add("Content-Encoding", contentEncode)
 	httpReq.Header.Set("Content-Type", contentType)
 	httpReq.Header.Set("X-Version", cfg.ProbeName+"/"+git.Version)
 	httpReq.Header.Set("X-Team-Id", cfg.Cfg.TeamID)
 	httpReq.Header.Set("X-Uploader-Uid", cfg.Cfg.UploaderUID)
 	httpReq.Header.Set("X-Uploader-Ip", cfg.Cfg.Host)
-	httpReq.Header.Set("X-Hostname", HostName)
+	httpReq.Header.Set("X-Host-Name", HostName)
+	httpReq.Header.Set("X-App-Name", cfg.ProbeName)
 	httpReq.Header.Set("Date", date)
-	httpReq.Header.Set("Authorization", "corsair "+cfg.Cfg.AK+":"+sig)
+	httpReq.Header.Set("Authorization", "kodo "+cfg.Cfg.AK+":"+sig)
 	httpReq = httpReq.WithContext(ctx)
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)

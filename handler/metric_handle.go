@@ -103,7 +103,7 @@ func (h *metricHandler) innerHandler(filters ...string) (http.Handler, error) {
 	)
 
 	if h.includeExporterMetrics {
-		log.Println("promhttp.InstrumentMetricHandler")
+		//log.Println("promhttp.InstrumentMetricHandler")
 		// Note that we have to use h.exporterMetricsRegistry here to
 		// use the same promhttp metrics for all expositions.
 

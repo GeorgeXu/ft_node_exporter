@@ -38,6 +38,12 @@ type Meta struct {
 	GroupName   string `json:"group_name"`
 }
 
+const (
+	InstallDir     = `/usr/local/cloudcare/profwang/`
+	ProbeName      = `profwang_probe`
+	DefaultCfgPath = InstallDir + ProbeName + ".yml"
+)
+
 var (
 	Cfg = Config{
 		QueueCfg: map[string]int{
@@ -51,15 +57,14 @@ var (
 		SingleMode:             1,
 		EnableAll:              1,
 		Port:                   9100,
-		EnvCfgFile:             `/usr/local/cloudcare/env.json`,
-		FileInfoCfgFile:        `/usr/local/cloudcare/fileinfo.json`,
+		EnvCfgFile:             InstallDir + "env.json",
+		FileInfoCfgFile:        InstallDir + "fileinfo.json",
 		ScrapeMetricInterval:   60000,
 		ScrapeEnvInfoInterval:  900000,
 		ScrapeFileInfoInterval: 86400000,
 	}
 
 	DecodedSK = ""
-	ProbeName = `corsair`
 )
 
 // 导入 @f 中的配置

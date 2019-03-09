@@ -2,18 +2,21 @@
 
 default: local
 
-BIN = corsair
-NAME = corsair
+PUB_DIR = pub
+BIN = profwang_probe
+NAME = profwang_probe
+ENTRY = main.go
+VERSION := $(shell git describe --always --tags)
 
 # devops 测试环境
 TEST_KODO_HOST = http://kodo-testing.prof.wang
-TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/${NAME}/test
+TEST_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/$(NAME)/test
 TEST_SSL = 0
 TEST_PORT = 80
 
-# 预发环境
+# devops 预发环境
 PREPROD_KODO_HOST = http://kodo-preprod.prof.wang
-PREPROD_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/${NAME}/preprod
+PREPROD_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/$(NAME)/preprod
 PREPROD_SSL = 0
 PREPROD_PORT = 80
 
@@ -28,11 +31,6 @@ RELEASE_KODO_HOST = https://kodo.prof.wang
 RELEASE_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/${NAME}/release
 RELEASE_SSL = 1
 RELEASE_PORT = 443
-
-PUB_DIR = pub
-ENTRY = main.go
-
-VERSION := $(shell git describe --always --tags)
 
 all: test release pre local alpha
 
@@ -61,11 +59,11 @@ release:
 		-release release -pub-dir $(PUB_DIR)
 	@strip build/$(NAME)-linux-amd64/$(BIN)
 	@cp osqueryd env.json fileinfo.json build/$(NAME)-linux-amd64
-	@tar czf $(PUB_DIR)/release/$(NAME)-$(VERSION).tar.gz -C build .
+	@tar czf $(PUB_DIR)/release/$(NAME)-$(VERSION).tar.gz autostart -C build .
 	tree -Csh $(PUB_DIR)
 
 test:
-	@echo "===== ${NAME} test ===="
+	@echo "===== $(NAME) test ===="
 	@rm -rf $(PUB_DIR)/test
 	@mkdir -p build $(PUB_DIR)/test
 	@mkdir -p git
@@ -75,7 +73,7 @@ test:
 		-release test -pub-dir $(PUB_DIR)
 	@strip build/$(NAME)-linux-amd64/$(BIN)
 	@cp osqueryd env.json fileinfo.json build/$(NAME)-linux-amd64
-	@tar czf $(PUB_DIR)/test/$(NAME)-$(VERSION).tar.gz -C build .
+	@tar czf $(PUB_DIR)/test/$(NAME)-$(VERSION).tar.gz autostart -C build .
 	tree -Csh $(PUB_DIR)
 
 pre:
