@@ -50,7 +50,7 @@ within_docker=0
 single_mode=1
 enable_all=1
 host_ip="default"
-port=9100
+bind_addr="localhost:9100"
 
 while [[ $# > 1 ]]
 do
@@ -113,8 +113,8 @@ do
       shift
       ;;
 
-    --port)
-      port="$2"
+    --bind-addr)
+      bind_addr="$2"
       shift
       ;;
 
@@ -177,7 +177,7 @@ done
 ########################################################
 
 ports=(
-$port
+cut -d ':' -f2 <<<${bind_addr}
 )
 
 for ap in "${ports[@]}"; do
@@ -230,12 +230,12 @@ if [ $upgrade_flag -eq 0 ]; then
     --host "${host_ip}" \
 		--env-cfg "${env_cfg}" \
 		--provider "${provider}" \
-		--port "${port}" ; then
+		--bind-addr "${bind_addr}" ; then
 
     printf "ok\n" | tee -a ${install_log}
   else
     printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
-		echo "${binary}" --init --team-id "${team_id}" --ak "${ak}" --sk "${sk}" --single-mode ${single_mode} --enable-all ${enable_all} --cfg "${yml_cfg}" --remote-host "${remote_host}" --host "${host_ip}" --port "${port}" | tee -a ${install_log}
+		echo "${binary}" --init --team-id "${team_id}" --ak "${ak}" --sk "${sk}" --single-mode ${single_mode} --enable-all ${enable_all} --cfg "${yml_cfg}" --remote-host "${remote_host}" --host "${host_ip}" --bind-addr "${bind_addr}" | tee -a ${install_log}
     exit 1
   fi
 else
