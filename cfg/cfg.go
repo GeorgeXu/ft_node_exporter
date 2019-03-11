@@ -15,7 +15,7 @@ type Config struct {
 	UploaderUID     string `yaml:"uploader_uid"`
 	AK              string `yaml:"ak"`
 	SK              string `yaml:"sk"`
-	Port            int    `yaml:"port"`
+	BindAddr        string `yaml:"bind_addr"`
 	SingleMode      int    `yaml:"single_mode"`
 	Host            string `yaml:"host"`
 	GroupName       string `yaml:"group_name"`
@@ -56,7 +56,7 @@ var (
 		RemoteHost:             `http://kodo.cloudcare.com`,
 		SingleMode:             1,
 		EnableAll:              1,
-		Port:                   9100,
+		BindAddr:               `localhost:9100`,
 		EnvCfgFile:             InstallDir + "env.json",
 		FileInfoCfgFile:        InstallDir + "fileinfo.json",
 		ScrapeMetricInterval:   60000,

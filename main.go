@@ -61,7 +61,7 @@ var (
 	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval",
 		"frequency to upload file info data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeFileInfoInterval)).Int()
 
-	flagPort = kingpin.Flag("port", `web listen port`).Int()
+	flagBindAddr = kingpin.Flag("bind-addr", `http server bind addr`).Default(`localhost:9100`).String()
 
 	flagEnvCfg      = kingpin.Flag("env-cfg", "env-collector configure").Default(cfg.Cfg.EnvCfgFile).String()
 	flagFileInfoCfg = kingpin.Flag("fileinfo-cfg", "fileinfo-collector configure").Default(cfg.Cfg.FileInfoCfgFile).String()
@@ -117,9 +117,9 @@ func initCfg() error {
 		cfg.DecodedSK = *flagSK
 	}
 
-	cfg.Cfg.Port = *flagPort
-	if cfg.Cfg.Port == 0 {
-		cfg.Cfg.Port = 9100
+	cfg.Cfg.BindAddr = *flagBindAddr
+	if cfg.Cfg.BindAddr == "" {
+		cfg.Cfg.BindAddr = "localhost:9100"
 	}
 	cfg.Cfg.EnvCfgFile = *flagEnvCfg
 	cfg.Cfg.FileInfoCfgFile = *flagFileInfoCfg
@@ -213,11 +213,11 @@ Golang Version: %s
 	envinfo.Init(cfg.Cfg.EnvCfgFile)
 	fileinfo.Init(cfg.Cfg.FileInfoCfgFile)
 
-	log.Println(fmt.Sprintf("[info] start on %d ...", cfg.Cfg.Port))
+	log.Println(fmt.Sprintf("[info] start on %d ...", cfg.Cfg.BindAddr))
 
 	if cfg.Cfg.SingleMode == 1 {
 		// metric 数据收集和上报
-		getURLMetric := fmt.Sprintf("http://localhost:%d%s", cfg.Cfg.Port, *metricsPath)
+		getURLMetric := fmt.Sprintf("http://%s%s", cfg.Cfg.BindAddr, *metricsPath)
 
 		log.Printf("[debug] metric url: %s", getURLMetric)
 
@@ -228,7 +228,7 @@ Golang Version: %s
 		}
 
 		// env info 收集器
-		getURLEnv := fmt.Sprintf("http://localhost:%d%s?format=json", cfg.Cfg.Port, *envInfoPath)
+		getURLEnv := fmt.Sprintf("http://%s%s?format=json", cfg.Cfg.BindAddr, *envInfoPath)
 
 		log.Printf("[debug] env-info url: %s", getURLEnv)
 
@@ -238,7 +238,7 @@ Golang Version: %s
 		}
 
 		// file info 收集器
-		getURLFile := fmt.Sprintf("http://localhost:%d%s", cfg.Cfg.Port, *fileInfoPath)
+		getURLFile := fmt.Sprintf("http://%s%s", cfg.Cfg.BindAddr, *fileInfoPath)
 
 		log.Printf("[debug] env-info url: %s", getURLFile)
 
@@ -284,8 +284,7 @@ Golang Version: %s
 		}
 	})
 
-	listenAddress := fmt.Sprintf("localhost:%d", cfg.Cfg.Port)
-	l, err := net.Listen(`tcp`, listenAddress)
+	l, err := net.Listen(`tcp`, cfg.Cfg.BindAddr)
 	if err != nil {
 		log.Fatalf("[fatal] %s", err.Error())
 	}
