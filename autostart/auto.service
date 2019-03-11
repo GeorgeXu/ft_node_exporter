@@ -7,12 +7,12 @@ After=network.target
 
 [Service]
 Environment=HOME=/root
-WorkingDirectory=/usr/local/cloudcare/profwang
+WorkingDirectory=/usr/local/cloudcare/profwang_probe
 ExecReload=/bin/kill -2 $MAINPID
 KillMode=process
 Restart=always
 RestartSec=3s
-ExecStart=/usr/local/cloudcare/profwang/profwang_probe --cfg /usr/local/cloudcare/profwang/profwang_probe.yml
+ExecStart=/usr/local/cloudcare/profwang_probe/profwang_probe --cfg /usr/local/cloudcare/profwang_probe/profwang_probe.yml
 
 [Install]
 WantedBy=default.target

@@ -39,7 +39,7 @@ type Meta struct {
 }
 
 const (
-	InstallDir     = `/usr/local/cloudcare/profwang/`
+	InstallDir     = `/usr/local/cloudcare/profwang_probe/`
 	ProbeName      = `profwang_probe`
 	DefaultCfgPath = InstallDir + ProbeName + ".yml"
 )

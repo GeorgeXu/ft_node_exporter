@@ -136,7 +136,7 @@ pre:
 		-release preprod -pub-dir $(PUB_DIR)
 	@strip build/$(NAME)-linux-amd64/$(BIN)
 	@cp osqueryd env.json fileinfo.json build/$(NAME)-linux-amd64
-	@tar czf $(PUB_DIR)/preprod/$(NAME)-$(VERSION).tar.gz -C build .
+	@tar czf $(PUB_DIR)/preprod/$(NAME)-$(VERSION).tar.gz autostart -C build .
 	tree -Csh $(PUB_DIR)
 
 ft_pre:
@@ -150,7 +150,7 @@ ft_pre:
 		-release preprod -pub-dir $(PUB_DIR)
 	@strip build/$(FT_NAME)-linux-amd64/$(FT_BIN)
 	@cp osqueryd env.json fileinfo.json build/$(FT_NAME)-linux-amd64
-	@tar czf $(PUB_DIR)/preprod/$(FT_NAME)-$(VERSION).tar.gz -C build .
+	@tar czf $(PUB_DIR)/preprod/$(FT_NAME)-$(VERSION).tar.gz autostart -C build .
 	tree -Csh $(PUB_DIR)
 
 pub_pre:

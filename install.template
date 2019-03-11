@@ -10,7 +10,7 @@ bin_name="profwang_probe"
 service_name="profwang_probe"
 
 # 安装目录设置
-install_dir="/usr/local/cloudcare/profwang"
+install_dir="/usr/local/cloudcare/profwang_probe"
 pid_file="${install_dir}/${bin_name}".pid
 yml_cfg="${install_dir}/${bin_name}".yml
 binary="${install_dir}/${bin_name}"
@@ -31,19 +31,6 @@ echo "Date: `date`" | tee -a $install_log
 printf "===================================\n" | tee -a $install_log
 
 printf "current newest version: %s\n" "{{.Version}}" | tee -a $install_log
-
-# 检测磁盘空间
-#required_size=5000000 #KB in 1000
-#cur_size=`df | grep '\/$' | awk '{print $4}'`
-
-#printf "detecting disk space(%dGB required)... " $((${required_size} / 1000 / 1000)) | tee -a $install_log
-
-#if [  ${cur_size}  -lt ${required_size} ]; then
-#	printf 'disk size less than %dGB(required), exited now!\n' $((${required_size} / 1000 / 1000)) | tee -a $install_log
-#	exit
-#else
-#	printf 'ok.\n' | tee -a $install_log
-#fi
 
 upgrade_flag=0
 within_docker=0
@@ -160,7 +147,7 @@ services=(
 )
 
 for s in "${services[@]}"; do
-  printf "stopping %s... ${s}\n" | tee -a $install_log
+  printf "stopping ${s} ...\n" | tee -a $install_log
 
 	service "$s" stop >/dev/null 2>&1
   systemctl stop "$s" >/dev/null 2>&1
@@ -177,7 +164,7 @@ done
 ########################################################
 
 ports=(
-cut -d ':' -f2 <<<${bind_addr}
+"$(cut -d ':' -f2 <<<${bind_addr})"
 )
 
 for ap in "${ports[@]}"; do
@@ -244,8 +231,8 @@ fi
 
 printf "starting ${service_name} ...\n" | tee -a ${install_log}
 
-(${binary} --cfg "${yml_cfg}" &> ${log} &)
-exit 0
+#(${binary} --cfg "${yml_cfg}" &> ${log} &)
+#exit 0
 
 # TODO 这里的开机启动需要整理下
 
@@ -264,6 +251,8 @@ exit 0
 ########################################################
 if hash systemctl 2>/dev/null; then
 
+	printf "${service_name} init by systemctl...\n" | tee -a ${install_log}
+
   systemctl stop "${service_name}" > /dev/null 2>&1
   systemctl disable "${service_name}" > /dev/null 2>&1
   systemd_path="/lib/systemd"
@@ -280,6 +269,7 @@ if hash systemctl 2>/dev/null; then
   fi
 else
   if hash init-checkconf 2>/dev/null; then
+
     printf "${service_name} init by new upstart...\n" | tee -a "${install_log}"
 
     service "${service_name}" stop > /dev/null 2>&1

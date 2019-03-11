@@ -18,7 +18,7 @@
 ### END INIT INFO
 
 SERVICE=profwang_probe
-INSTALL_DIR="/usr/local/cloudcare/profwang"
+INSTALL_DIR="/usr/local/cloudcare/profwang_probe"
 BINARY="${INSTALL_DIR}/${SERVICE}"
 YAML_CFG="${INSTALL_DIR}/${SERVICE}.yml"
 PID="${INSTALL_DIR}/${SERVICE}".pid
