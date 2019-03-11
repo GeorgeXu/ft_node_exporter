@@ -100,7 +100,7 @@ type issueResp struct {
 }
 
 func UploaderUidOK(uid string) bool {
-	requrl := cfg.Cfg.RemoteHost + fmt.Sprintf("/v1/uploader-uid/check?uid=%s", cfg.Cfg.UploaderUID)
+	requrl := cfg.Cfg.RemoteHost + fmt.Sprintf("/v1/uploader-uid/check?uploader_uid=%s", cfg.Cfg.UploaderUID)
 	httpReq, err := http.NewRequest(http.MethodGet, requrl, nil)
 	if err != nil {
 		log.Printf("[error] %s", err.Error())

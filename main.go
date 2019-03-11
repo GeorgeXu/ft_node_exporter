@@ -16,7 +16,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -150,38 +149,6 @@ func initCfg() error {
 	}
 
 	return cfg.DumpConfig(*flagCfgFile)
-}
-
-func probeCheck() error {
-	url := fmt.Sprintf("%s/v1/probe/check?team_id=%s&probe=%s&uploader_uid=%s",
-		cfg.Cfg.RemoteHost, cfg.Cfg.TeamID, cfg.ProbeName, cfg.Cfg.UploaderUID)
-
-	resp, err := http.Get(url)
-	if err != nil { // 可能网络不通
-		return err
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if resp.StatusCode != 200 {
-		log.Fatalf("[fatal] check failed: %s", string(body))
-	}
-
-	msg := map[string]string{}
-	if err := json.Unmarshal(body, &msg); err != nil {
-		log.Fatal(err)
-	}
-
-	if msg[`error`] != "" {
-		return fmt.Errorf(msg[`error`])
-	}
-
-	return nil
 }
 
 func main() {
