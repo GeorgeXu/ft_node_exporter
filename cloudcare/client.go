@@ -46,10 +46,13 @@ type ClientConfig struct {
 }
 
 type KodoMsg struct {
-	Msg      string `json:"msg"`
-	Error    string `json:"error"`
-	Rejected bool   `json:"rejected"`
+	Code      int    `json:"code"`
+	ErrorCode string `json:"errorCode"`
+	Content   string `json:"content,omitempty"`
+	Message   string `json:"message,omitempty"`
 }
+
+var ErrorCodeRejected = "carrier.kodo.rejected"
 
 // NewClient creates a new Client.
 func NewClient(index int, conf *ClientConfig) (*Client, error) {
@@ -258,7 +261,7 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 	if httpResp.StatusCode/100 != 2 {
 
 		scanner := bufio.NewScanner(io.LimitReader(httpResp.Body, maxErrMsgLen))
-		line := []byte(`{"error": "", "rejected": false, "msg": ""}`)
+		line := []byte(`{"code": "", "errorCode": "", "message": ""}`)
 
 		if scanner.Scan() {
 			line = scanner.Bytes()
@@ -267,8 +270,8 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 			if err := json.Unmarshal(line, &msg); err != nil {
 				// pass
 			} else {
-				if msg.Rejected {
-					log.Printf("[fatal] rejected by kodo: %s", msg.Error)
+				if msg.ErrorCode == ErrorCodeRejected {
+					log.Printf("[fatal] rejected by kodo: %s", msg.Message)
 					os.Exit(-1)
 				}
 			}
