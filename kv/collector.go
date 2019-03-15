@@ -1,4 +1,4 @@
-package envinfo
+package kv
 
 import (
 	"encoding/base64"
@@ -12,7 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const namespace = "envinfo"
+const namespace = "kv_node"
 
 type queryResult struct {
 	rawJson    string
@@ -25,9 +25,9 @@ var (
 	//   -S: run as shell mode
 	//   --json: output result in json format
 
-	factories      = make(map[string]func(*envCfg) (Collector, error))
+	factories      = make(map[string]func(*kvCfg) (Collector, error))
 	collectorState = make(map[string]bool)
-	factoryArgs    = make(map[string]*envCfg)
+	factoryArgs    = make(map[string]*kvCfg)
 
 	scrapeDurationDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "scrape", "collector_duration_seconds"),
@@ -47,7 +47,7 @@ type Collector interface {
 	Update(ch chan<- prometheus.Metric) error
 }
 
-func registerCollector(collector string, isDefaultEnabled bool, factory func(*envCfg) (Collector, error), arg *envCfg) {
+func registerCollector(collector string, isDefaultEnabled bool, factory func(*kvCfg) (Collector, error), arg *kvCfg) {
 	collectorState[collector] = isDefaultEnabled
 	factories[collector] = factory
 	if arg != nil {
@@ -55,11 +55,11 @@ func registerCollector(collector string, isDefaultEnabled bool, factory func(*en
 	}
 }
 
-type EnvInfoCollector struct {
+type KvCollector struct {
 	Collectors map[string]Collector
 }
 
-func NewEnvInfoCollector(filters ...string) (*EnvInfoCollector, error) {
+func NewKvCollector(filters ...string) (*KvCollector, error) {
 	f := make(map[string]bool)
 	for _, filter := range filters {
 		enabled, exist := collectorState[filter]
@@ -84,15 +84,15 @@ func NewEnvInfoCollector(filters ...string) (*EnvInfoCollector, error) {
 			}
 		}
 	}
-	return &EnvInfoCollector{Collectors: collectors}, nil
+	return &KvCollector{Collectors: collectors}, nil
 }
 
-func (c EnvInfoCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c KvCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- scrapeDurationDesc
 	ch <- scrapeSuccessDesc
 }
 
-func (c EnvInfoCollector) Collect(ch chan<- prometheus.Metric) {
+func (c KvCollector) Collect(ch chan<- prometheus.Metric) {
 	wg := sync.WaitGroup{}
 	wg.Add(len(c.Collectors))
 

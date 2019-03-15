@@ -1,4 +1,4 @@
-package envinfo
+package kv
 
 import (
 	"encoding/json"
@@ -31,16 +31,16 @@ var forbidTags = []string{
 }
 
 const (
-	envCollectorTypeCat     = `cat`
-	envCollectorTypeOSQuery = `osquery`
+	kvCollectorTypeCat     = `cat`
+	kvCollectorTypeOSQuery = `osquery`
 
-	envPlatformWindows = `windows`
-	envPlatformLinux   = `linux`
+	kvPlatformWindows = `windows`
+	kvPlatformLinux   = `linux`
 
 	fileSep = "\r\n"
 )
 
-type envCfg struct {
+type kvCfg struct {
 	Platform  string `json:"platform"`
 	SubSystem string `json:"sub_system"`
 	Type      string `json:"type"`
@@ -54,21 +54,21 @@ type envCfg struct {
 	Enabled bool     `json:"enabled"`
 }
 
-type envCfgs struct {
-	Envs []*envCfg `json:"envs"`
+type kvCfgs struct {
+	Kvs []*kvCfg `json:"kvs"`
 }
 
-type envCollector struct {
+type kvCollector struct {
 	desc *prometheus.Desc
-	cfg  *envCfg
+	cfg  *kvCfg
 }
 
 var (
 	JsonFormat = false
 )
 
-func NewEnvCollector(conf *envCfg) (Collector, error) {
-	c := &envCollector{
+func NewNodeCollector(conf *kvCfg) (Collector, error) {
+	c := &kvCollector{
 		cfg: conf,
 	}
 
@@ -81,45 +81,45 @@ func NewEnvCollector(conf *envCfg) (Collector, error) {
 }
 
 func Init(cfgFile string) {
-	var envCfgs envCfgs
+	var kvCfgs kvCfgs
 	j, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
 		log.Fatalf("[fatal] open %s failed: %s", cfgFile, err)
 	}
 
-	if err := json.Unmarshal(j, &envCfgs); err != nil {
+	if err := json.Unmarshal(j, &kvCfgs); err != nil {
 		log.Fatalf("[fatal] yaml load %s failed: %s", cfgFile, err)
 	}
 
-	for _, ec := range envCfgs.Envs {
-		if ec.Platform != "" && ec.Platform == runtime.GOOS {
+	for _, kc := range kvCfgs.Kvs {
+		if kc.Platform != "" && kc.Platform == runtime.GOOS {
 
-			//ec.Tags = append(ec.Tags, cloudcare.TagUploaderUID, cloudcare.TagHost) // 追加默认 tags
-			registerCollector(ec.SubSystem, ec.Enabled, NewEnvCollector, ec)
+			//kc.Tags = append(kc.Tags, cloudcare.TagUploaderUID, cloudcare.TagHost) // 追加默认 tags
+			registerCollector(kc.SubSystem, kc.Enabled, NewNodeCollector, kc)
 
 		} else {
-			log.Printf("[info] skip collector %s(platform: %s)", ec.SubSystem, ec.Platform)
+			log.Printf("[info] skip collector %s(platform: %s)", kc.SubSystem, kc.Platform)
 		}
 	}
 
 }
 
-func (ec *envCollector) Update(ch chan<- prometheus.Metric) error {
-	switch ec.cfg.Type {
-	case envCollectorTypeCat:
-		return ec.catUpdate(ch)
-	case envCollectorTypeOSQuery:
-		return ec.osqueryUpdate(ch)
+func (kc *kvCollector) Update(ch chan<- prometheus.Metric) error {
+	switch kc.cfg.Type {
+	case kvCollectorTypeCat:
+		return kc.catUpdate(ch)
+	case kvCollectorTypeOSQuery:
+		return kc.osqueryUpdate(ch)
 	default:
-		log.Printf("[warn] unsupported env collector type: %s", ec.cfg.Type)
+		log.Printf("[warn] unsupported env collector type: %s", kc.cfg.Type)
 		return nil
 	}
 	return nil
 }
 
-func (ec *envCollector) catUpdate(ch chan<- prometheus.Metric) error {
+func (kc *kvCollector) catUpdate(ch chan<- prometheus.Metric) error {
 	var rawFileContents []string
-	for _, f := range ec.cfg.Files {
+	for _, f := range kc.cfg.Files {
 		if _, err := os.Stat(f); err != nil {
 			continue
 		}
@@ -130,30 +130,30 @@ func (ec *envCollector) catUpdate(ch chan<- prometheus.Metric) error {
 		}
 		rawFileContents = append(rawFileContents, raw)
 
-		if ec.cfg.Any {
+		if kc.cfg.Any {
 			break
 		}
 	}
 
 	if len(rawFileContents) == 0 {
-		log.Printf("[warn] no file read for %s, ignored", ec.cfg.SubSystem)
+		log.Printf("[warn] no file read for %s, ignored", kc.cfg.SubSystem)
 		return nil
 	}
 
 	raw := strings.Join(rawFileContents, fileSep)
-	ch <- newEnvMetric(ec, raw)
+	ch <- newEnvMetric(kc, raw)
 	return nil
 }
 
-func newEnvMetric(ec *envCollector, envVal string) prometheus.Metric {
-	return prometheus.MustNewConstMetric(ec.desc, prometheus.GaugeValue, float64(-1), envVal,
+func newEnvMetric(kc *kvCollector, envVal string) prometheus.Metric {
+	return prometheus.MustNewConstMetric(kc.desc, prometheus.GaugeValue, float64(-1), envVal,
 		// 此处追加两个 tag, 在 queue-manager 那边也会追加, 有重复, 待去掉
 		cfg.Cfg.UploaderUID)
 	return nil
 }
 
-func (ec *envCollector) osqueryUpdate(ch chan<- prometheus.Metric) error {
-	res, err := doQuery(ec.cfg.SQL)
+func (kc *kvCollector) osqueryUpdate(ch chan<- prometheus.Metric) error {
+	res, err := doQuery(kc.cfg.SQL)
 	if err != nil {
 		return err
 	}
@@ -186,8 +186,8 @@ func (ec *envCollector) osqueryUpdate(ch chan<- prometheus.Metric) error {
 		}
 
 		desc := prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", ec.cfg.SubSystem),
-			ec.cfg.Help,
+			prometheus.BuildFQName(namespace, "", kc.cfg.SubSystem),
+			kc.cfg.Help,
 			keys,
 			nil,
 		)
@@ -207,7 +207,7 @@ func (ec *envCollector) osqueryUpdate(ch chan<- prometheus.Metric) error {
 			ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, -1, vals...)
 		}
 	} else {
-		ch <- newEnvMetric(ec, res.rawJson)
+		ch <- newEnvMetric(kc, res.rawJson)
 	}
 
 	return nil

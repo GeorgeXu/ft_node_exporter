@@ -26,19 +26,19 @@ import (
 	"github.com/prometheus/node_exporter/cfg"
 	"github.com/prometheus/node_exporter/cloudcare"
 	"github.com/prometheus/node_exporter/collector"
-	"github.com/prometheus/node_exporter/envinfo"
 	"github.com/prometheus/node_exporter/fileinfo"
 	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/node_exporter/handler"
+	"github.com/prometheus/node_exporter/kv"
 	"github.com/prometheus/node_exporter/utils"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	metricsPath  = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
-	envInfoPath  = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/env_infos").String()
-	fileInfoPath = kingpin.Flag("web.telemetry-file-info-path", "Path under which to expose file info.").Default("/file_infos").String()
+	metricsPath     = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
+	kvUrlPath       = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/kvs").String()
+	fileinfoUrlPath = kingpin.Flag("web.telemetry-file-info-path", "Path under which to expose file info.").Default("/fileinfos").String()
 
 	cfgAPI = kingpin.Flag("web.meta-path", "Path under which to expose meta info.").Default("/config").String()
 
@@ -56,15 +56,15 @@ var (
 
 	flagScrapeMetricInterval = kingpin.Flag("scrape-metric-interval",
 		"frequency to upload metric data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeMetricInterval)).Int()
-	flagScrapeEnvInfoInterval = kingpin.Flag("scrape-env-info-interval",
-		"frequency to upload env info data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeEnvInfoInterval)).Int()
-	flagScrapeFileInfoInterval = kingpin.Flag("scrape-file-info-interval",
-		"frequency to upload file info data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeFileInfoInterval)).Int()
+	flagScrapeKvInterval = kingpin.Flag("scrape-kv-interval",
+		"frequency to upload kv data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeKvInterval)).Int()
+	flagScrapeFileinfoInterval = kingpin.Flag("scrape-fileinfo-interval",
+		"frequency to upload cfg data(ms)").Default(fmt.Sprintf("%d", cfg.Cfg.ScrapeFileinfoInterval)).Int()
 
 	flagBindAddr = kingpin.Flag("bind-addr", `http server bind addr`).Default(`localhost:9100`).String()
 
-	flagEnvCfg      = kingpin.Flag("env-cfg", "env-collector configure").Default(cfg.Cfg.EnvCfgFile).String()
-	flagFileInfoCfg = kingpin.Flag("fileinfo-cfg", "fileinfo-collector configure").Default(cfg.Cfg.FileInfoCfgFile).String()
+	flagKvCfg       = kingpin.Flag("env-cfg", "env-collector configure").Default(cfg.Cfg.KvCfgFile).String()
+	flagFileinfoCfg = kingpin.Flag("cfg-cfg", "cfg-collector configure").Default(cfg.Cfg.FileinfoCfgFile).String()
 
 	flagEnableAllCollectors = kingpin.Flag("enable-all", "enable all collectors").Default(fmt.Sprintf("%d", cfg.Cfg.EnableAll)).Int()
 
@@ -91,8 +91,8 @@ func initCfg() error {
 
 	cfg.Cfg.RemoteHost = *flagRemoteHost
 	cfg.Cfg.ScrapeMetricInterval = *flagScrapeMetricInterval
-	cfg.Cfg.ScrapeEnvInfoInterval = *flagScrapeEnvInfoInterval
-	cfg.Cfg.ScrapeFileInfoInterval = *flagScrapeFileInfoInterval
+	cfg.Cfg.ScrapeKvInterval = *flagScrapeKvInterval
+	cfg.Cfg.ScrapeFileinfoInterval = *flagScrapeFileinfoInterval
 	cfg.Cfg.EnableAll = *flagEnableAllCollectors
 
 	// 单机模式下，team-id 为必填参数
@@ -121,8 +121,8 @@ func initCfg() error {
 	if cfg.Cfg.BindAddr == "" {
 		cfg.Cfg.BindAddr = "localhost:9100"
 	}
-	cfg.Cfg.EnvCfgFile = *flagEnvCfg
-	cfg.Cfg.FileInfoCfgFile = *flagFileInfoCfg
+	cfg.Cfg.KvCfgFile = *flagKvCfg
+	cfg.Cfg.FileinfoCfgFile = *flagFileinfoCfg
 	cfg.Cfg.Provider = *flagProvider
 
 	cfg.Cfg.Collectors = collector.ListAllCollectors()
@@ -208,10 +208,10 @@ Golang Version: %s
 		}
 	}
 
-	// init envinfo configure
-	envinfo.OSQuerydPath = filepath.Join(*flagInstallDir, `osqueryd`)
-	envinfo.Init(cfg.Cfg.EnvCfgFile)
-	fileinfo.Init(cfg.Cfg.FileInfoCfgFile)
+	// init kv configure
+	kv.OSQuerydPath = filepath.Join(*flagInstallDir, `osqueryd`)
+	kv.Init(cfg.Cfg.KvCfgFile)
+	fileinfo.Init(cfg.Cfg.FileinfoCfgFile)
 
 	log.Println(fmt.Sprintf("[info] start on %d ...", cfg.Cfg.BindAddr))
 
@@ -228,30 +228,30 @@ Golang Version: %s
 		}
 
 		// env info 收集器
-		getURLEnv := fmt.Sprintf("http://%s%s?format=json", cfg.Cfg.BindAddr, *envInfoPath)
+		getURLEnv := fmt.Sprintf("http://%s%s?format=json", cfg.Cfg.BindAddr, *kvUrlPath)
 
 		log.Printf("[debug] env-info url: %s", getURLEnv)
 
 		postURLEnv := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
-		if err := cloudcare.Start(postURLEnv, getURLEnv, int64(cfg.Cfg.ScrapeEnvInfoInterval)); err != nil {
+		if err := cloudcare.Start(postURLEnv, getURLEnv, int64(cfg.Cfg.ScrapeKvInterval)); err != nil {
 			log.Fatalf("[fatal] %s", err)
 		}
 
 		// file info 收集器
-		getURLFile := fmt.Sprintf("http://%s%s", cfg.Cfg.BindAddr, *fileInfoPath)
+		getURLFile := fmt.Sprintf("http://%s%s", cfg.Cfg.BindAddr, *fileinfoUrlPath)
 
 		log.Printf("[debug] env-info url: %s", getURLFile)
 
 		postURLFile := fmt.Sprintf("%s%s", cfg.Cfg.RemoteHost, "/v1/write/env")
-		if err := cloudcare.Start(postURLFile, getURLFile, int64(cfg.Cfg.ScrapeFileInfoInterval)); err != nil {
+		if err := cloudcare.Start(postURLFile, getURLFile, int64(cfg.Cfg.ScrapeFileinfoInterval)); err != nil {
 			log.Fatalf("[fatal] %s", err)
 		}
 
 		// TODO: 这些主动上报收集器, 并入集群模式时, 需要设计退出机制
 	}
 
-	http.Handle(*envInfoPath, handler.NewEnvInfoHandler())
-	http.Handle(*fileInfoPath, handler.NewFileInfoHandler())
+	http.Handle(*kvUrlPath, handler.NewKvHandler())
+	http.Handle(*fileinfoUrlPath, handler.NewFileInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
 
 	http.HandleFunc(*cfgAPI, func(w http.ResponseWriter, r *http.Request) {

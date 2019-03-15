@@ -21,13 +21,13 @@ type Config struct {
 	GroupName       string `yaml:"group_name"`
 	RemoteHost      string `yaml:"remote_host"`
 	EnableAll       int    `yaml:"enable_all"`
-	EnvCfgFile      string `yaml:"env_cfg_file"`
-	FileInfoCfgFile string `yaml:"fileinfo_cfg_file"`
+	KvCfgFile       string `yaml:"kv_cfg_file"`
+	FileinfoCfgFile string `yaml:"fileinfo_cfg_file"`
 	Provider        string `yaml:"provider"`
 
 	ScrapeMetricInterval   int `yaml:"scrap_metric_interval"`
-	ScrapeEnvInfoInterval  int `yaml:"scrap_env_info_interval"`
-	ScrapeFileInfoInterval int `yaml:"scrap_file_info_interval"`
+	ScrapeKvInterval       int `yaml:"scrap_kv_interval"`
+	ScrapeFileinfoInterval int `yaml:"scrap_fileinfo_interval"`
 
 	Collectors map[string]bool `yaml:"collectors"`
 	QueueCfg   map[string]int  `yaml:"queue_cfg"`
@@ -57,11 +57,11 @@ var (
 		SingleMode:             1,
 		EnableAll:              1,
 		BindAddr:               `localhost:9100`,
-		EnvCfgFile:             InstallDir + "env.json",
-		FileInfoCfgFile:        InstallDir + "fileinfo.json",
+		KvCfgFile:              InstallDir + "kv.json",
+		FileinfoCfgFile:        InstallDir + "fileinfo.json",
 		ScrapeMetricInterval:   60000,
-		ScrapeEnvInfoInterval:  900000,
-		ScrapeFileInfoInterval: 86400000,
+		ScrapeKvInterval:       900000,
+		ScrapeFileinfoInterval: 86400000,
 	}
 
 	DecodedSK = ""

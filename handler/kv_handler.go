@@ -8,18 +8,18 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/node_exporter/envinfo"
+	"github.com/prometheus/node_exporter/kv"
 )
 
-type envInfoHandler struct {
+type kvHandler struct {
 	unfilteredHandler http.Handler
 	// exporterMetricsRegistry is a separate registry for the metrics about
 	// the exporter itself.
 	exporterMetricsRegistry *prometheus.Registry
 }
 
-func NewEnvInfoHandler() *envInfoHandler {
-	h := &envInfoHandler{
+func NewKvHandler() *kvHandler {
+	h := &kvHandler{
 		exporterMetricsRegistry: prometheus.NewRegistry(),
 	}
 
@@ -32,16 +32,16 @@ func NewEnvInfoHandler() *envInfoHandler {
 	return h
 }
 
-func (h *envInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *kvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters := r.URL.Query()["collect[]"]
 	format := r.URL.Query()["format"]
 	if len(format) > 0 {
-		envinfo.JsonFormat = (format[0] == "json")
+		kv.JsonFormat = (format[0] == "json")
 	} else {
-		envinfo.JsonFormat = false
+		kv.JsonFormat = false
 	}
 
-	// log.Printf("[debug] env collect query:", filters)
+	// log.Printf("[debug] kv collect query:", filters)
 
 	if len(filters) == 0 {
 		h.unfilteredHandler.ServeHTTP(w, r)
@@ -58,8 +58,8 @@ func (h *envInfoHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fh.ServeHTTP(w, r)
 }
 
-func (h *envInfoHandler) innerHandler(f ...string) (http.Handler, error) {
-	c, err := envinfo.NewEnvInfoCollector(f...)
+func (h *kvHandler) innerHandler(f ...string) (http.Handler, error) {
+	c, err := kv.NewKvCollector(f...)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create collector: %s", err)
 	}
@@ -71,7 +71,7 @@ func (h *envInfoHandler) innerHandler(f ...string) (http.Handler, error) {
 		}
 
 		sort.Strings(collectors)
-		log.Printf("Enabled env collectors(%d):", len(collectors))
+		log.Printf("Enabled kv collectors(%d):", len(collectors))
 
 		for _, _c := range collectors {
 			log.Printf("[info]  - %s", _c)
@@ -80,7 +80,7 @@ func (h *envInfoHandler) innerHandler(f ...string) (http.Handler, error) {
 
 	r := prometheus.NewRegistry()
 	if err := r.Register(c); err != nil {
-		return nil, fmt.Errorf("couldn't register env_info collector: %s", err)
+		return nil, fmt.Errorf("couldn't register kv collector: %s", err)
 	}
 
 	handler := promhttp.HandlerFor(
