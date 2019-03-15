@@ -758,17 +758,6 @@
       "platform": "linux",
       "sql": "select * from mounts",
       "type": "osquery"
-    },
-    {
-      "help": "list shell_history",
-      "tags": [
-        "json"
-      ],
-      "sub_system": "shell_history",
-      "enabled": true,
-      "platform": "linux",
-      "sql": "select * from shell_history",
-      "type": "osquery"
     }
   ]
 }
