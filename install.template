@@ -18,7 +18,7 @@ log="${install_dir}/${bin_name}.log"
 install_log="${install_dir}/${bin_name}.install.log"
 provider="aliyun"
 
-env_cfg="${install_dir}"/env.json
+env_cfg="${install_dir}"/kv.json
 fileinf_cfg="${install_dir}"/fileinfo.json
 
 # 创建安装目录
