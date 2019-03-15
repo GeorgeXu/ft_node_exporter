@@ -146,6 +146,12 @@ func initCfg() error {
 		}
 
 		cfg.Cfg.UploaderUID = fmt.Sprintf("uid-%s", uid.String())
+
+		if cfg.Cfg.SingleMode > 0 {
+			if !cloudcare.CreateIssueSourceOK() {
+				os.Exit(-1)
+			}
+		}
 	}
 
 	return cfg.DumpConfig(*flagCfgFile)

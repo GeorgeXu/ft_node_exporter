@@ -2,7 +2,7 @@
 
 # exporter
 #
-# chkconfig: 2345 20 80
+# chkconfig: 2345 60 80
 # description: node exporter service
 
 ### BEGIN INIT INFO
