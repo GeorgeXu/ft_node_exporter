@@ -130,6 +130,7 @@ func compileArch(bin, goos, goarch, dir string) {
 	args := []string{
 		"go", "build",
 		"-o", output,
+		"-ldflags", "-s -w",
 		*flagMain,
 	}
 
