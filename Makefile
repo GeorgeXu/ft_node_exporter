@@ -35,8 +35,8 @@ LOCAL_SSL = 0
 LOCAL_PORT = 80
 
 # 正式环境
-RELEASE_KODO_HOST = https://kodo.prof.wang
-RELEASE_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/${NAME}/linux/release
+RELEASE_KODO_HOST = https://kodo.cloudcare.cn
+RELEASE_DOWNLOAD_ADDR = cloudcare-files.oss-cn-hangzhou.aliyuncs.com/${NAME}/linux/release
 FT_RELEASE_DOWNLOAD_ADDR = cloudcare-kodo.oss-cn-hangzhou.aliyuncs.com/${FT_NAME}/linux/release
 RELEASE_SSL = 1
 RELEASE_PORT = 443
