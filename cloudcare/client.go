@@ -271,9 +271,9 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 				// pass
 			} else {
 				if msg.ErrorCode == ErrorCodeRejected {
-					log.Printf("[fatal] rejected by kodo: %s", msg.Message)
-					sem.Close()
-					//time.Sleep(time.Duration(sleepMinute) * time.Minute)
+					log.Printf("[fatal] rejected by kodo: %s, process sleeping", msg.Message)
+					//sem.Close()
+					time.Sleep(time.Duration(sleepMinute) * time.Minute)
 					return nil
 				}
 			}

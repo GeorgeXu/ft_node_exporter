@@ -54,21 +54,10 @@ func Start(remoteHost string, scrapehost string, interval int64) error {
 			storage: s,
 		}
 
-		sem = utils.NewSem()
-
 		ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
 		defer ticker.Stop()
 
 		for {
-			select {
-			case <-sem.Wait():
-				log.Printf("[debug] no upload auth, sleeping ")
-				s.Close()
-				time.Sleep(time.Duration(sleepMinute) * time.Minute)
-				continue // 不再上报
-			default:
-				//pass
-			}
 			var buf bytes.Buffer
 
 			var (

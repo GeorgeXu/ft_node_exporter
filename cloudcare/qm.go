@@ -89,7 +89,7 @@ func (qm *QueueManager) Append(s *model.Sample) error {
 	qm.shardsMtx.Unlock()
 	if !ok {
 		qm.dropped++
-		log.Printf("[warn] sample queue full, total dropped %d samples", qm.dropped)
+		//log.Printf("[warn] sample queue full, total dropped %d samples", qm.dropped)
 	}
 
 	return nil
