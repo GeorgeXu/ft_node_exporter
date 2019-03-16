@@ -62,7 +62,9 @@ func Start(remoteHost string, scrapehost string, interval int64) error {
 		for {
 			select {
 			case <-sem.Wait():
-				log.Printf("[debug] kodo rejected, exit scrape ")
+				log.Printf("[debug] no upload auth, sleeping ")
+				s.Close()
+				time.Sleep(time.Duration(sleepMinute) * time.Minute)
 				continue // 不再上报
 			default:
 				//pass
