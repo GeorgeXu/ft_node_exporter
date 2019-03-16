@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/node_exporter/cfg"
 	"github.com/prometheus/node_exporter/rtpanic"
+	"github.com/prometheus/node_exporter/utils"
 )
 
 const (
@@ -19,6 +20,7 @@ const (
 
 var (
 	HostName string
+	sem      *utils.Sem // 退出信号量
 )
 
 func init() {
@@ -52,10 +54,19 @@ func Start(remoteHost string, scrapehost string, interval int64) error {
 			storage: s,
 		}
 
+		sem = utils.NewSem()
+
 		ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
 		defer ticker.Stop()
 
 		for {
+			select {
+			case <-sem.Wait():
+				log.Printf("[debug] kodo rejected, exit scrape ")
+				continue // 不再上报
+			default:
+				//pass
+			}
 			var buf bytes.Buffer
 
 			var (

@@ -80,3 +80,24 @@ func XorDecode(endata string) []byte {
 	}
 	return dedata.Bytes()[1 : 1+length]
 }
+
+type Sem struct {
+	sem chan interface{}
+}
+
+func NewSem() *Sem {
+	return &Sem{sem: make(chan interface{})}
+}
+
+func (s *Sem) Close() {
+	select {
+	case <-s.sem:
+		// pass: s.sem has been closed before
+	default:
+		close(s.sem)
+	}
+}
+
+func (s *Sem) Wait() <-chan interface{} {
+	return s.sem
+}
