@@ -15,7 +15,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/Go-zh/net/context/ctxhttp"
@@ -30,6 +29,7 @@ import (
 )
 
 const maxErrMsgLen = 256
+const sleepMinute = 30
 
 type Client struct {
 	index   int // Used to differentiate clients in metrics.
@@ -271,8 +271,9 @@ func (c *Client) Store(ctx context.Context, req *prompb.WriteRequest) error {
 				// pass
 			} else {
 				if msg.ErrorCode == ErrorCodeRejected {
-					log.Printf("[fatal] rejected by kodo: %s", msg.Message)
-					os.Exit(-1)
+					log.Printf("[fatal] rejected by kodo: %s, process sleeping", msg.Message)
+					time.Sleep(time.Duration(sleepMinute) * time.Minute)
+					return nil
 				}
 			}
 		}
