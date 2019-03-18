@@ -58,6 +58,14 @@ func Start(remoteHost string, scrapehost string, interval int64) error {
 		defer ticker.Stop()
 
 		for {
+			select {
+			case <-sem.Wait():
+				log.Printf("[debug] no upload auth, sleeping ")
+				s.Close()
+				return // 不再上报
+			default:
+				//pass
+			}
 			var buf bytes.Buffer
 
 			var (
