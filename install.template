@@ -6,11 +6,11 @@
 dl_url="http://{{.DownloadAddr}}/{{.Name}}-{{.Version}}.tar.gz"
 
 remote_host={{.KodoHost}}
-bin_name="profwang_probe"
-service_name="profwang_probe"
+bin_name="ft_node_exporter"
+service_name="ft_node_exporter"
 
 # 安装目录设置
-install_dir="/usr/local/cloudcare/profwang_probe"
+install_dir="/usr/local/cloudcare/ft_profwang_probe"
 pid_file="${install_dir}/${bin_name}".pid
 yml_cfg="${install_dir}/${bin_name}".yml
 binary="${install_dir}/${bin_name}"
@@ -19,7 +19,7 @@ install_log="${install_dir}/${bin_name}.install.log"
 provider="aliyun"
 
 env_cfg="${install_dir}"/kv.json
-fileinf_cfg="${install_dir}"/fileinfo.json
+fileinfo_cfg="${install_dir}"/fileinfo.json
 
 # 创建安装目录
 if ! mkdir -p "${install_dir}"; then
@@ -207,22 +207,16 @@ fi
 if [ $upgrade_flag -eq 0 ]; then
   printf "init ${service_name} ...\n" | tee -a ${install_log}
   if ${binary} --init \
-		--team-id "${team_id}" \
-		--ak "${ak}" \
-		--sk "${sk}" \
-		--single-mode ${single_mode} \
 		--enable-all ${enable_all} \
-    --cfg "${yml_cfg}" \
-    --remote-host "${remote_host}" \
     --host "${host_ip}" \
 		--env-cfg "${env_cfg}" \
-		--provider "${provider}" \
+		--fileinfo-cfg "${fileinfo_cfg}" \
 		--bind-addr "${bind_addr}" ; then
 
     printf "ok\n" | tee -a ${install_log}
   else
     printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
-		echo "${binary}" --init --team-id "${team_id}" --ak "${ak}" --sk "${sk}" --single-mode ${single_mode} --enable-all ${enable_all} --cfg "${yml_cfg}" --remote-host "${remote_host}" --host "${host_ip}" --bind-addr "${bind_addr}" | tee -a ${install_log}
+		echo "${binary}" --init --enable-all ${enable_all}  --host "${host_ip}" --bind-addr "${bind_addr}" | tee -a ${install_log}
     exit 1
   fi
 else

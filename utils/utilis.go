@@ -1,4 +1,4 @@
-package cloudcare
+package utils
 
 import (
 	"fmt"
@@ -7,14 +7,12 @@ import (
 	"log"
 	"os"
 	"path"
-
-	"github.com/prometheus/node_exporter/cfg"
 )
 
-func DumpPID() error {
+func DumpPID(installDir string, probeName string) error {
 	pid := os.Getpid()
 
-	pidfile := fmt.Sprintf("%s%s.pid", cfg.InstallDir, cfg.ProbeName)
+	pidfile := fmt.Sprintf("%s%s.pid", installDir, probeName)
 	return ioutil.WriteFile(pidfile, []byte(fmt.Sprintf("%d", pid)), 0664)
 }
 

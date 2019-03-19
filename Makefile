@@ -67,7 +67,7 @@ ft_local:
 	@mkdir -p git
 	@echo 'package git; const (Sha1 string=""; BuildAt string=""; Version string=""; Golang string="")' > git/git.go
 	@go run make.go -main $(ENTRY) -binary $(FT_BIN) -name $(FT_NAME) -build-dir build -archs "linux/amd64" -cgo \
-		-kodo-host $(LOCAL_KODO_HOST) -download-addr $(LOCAL_DOWNLOAD_ADDR) -ssl $(LOCAL_SSL) -port $(LOCAL_PORT) \
+		-kodo-host $(LOCAL_KODO_HOST) -download-addr $(FT_LOCAL_DOWNLOAD_ADDR) -ssl $(LOCAL_SSL) -port $(LOCAL_PORT) \
 		-release local -pub-dir $(PUB_DIR)
 	@strip build/$(FT_NAME)-linux-amd64/$(FT_BIN)
 	@cp osqueryd kv.json fileinfo.json build/$(FT_NAME)-linux-amd64
@@ -107,7 +107,7 @@ ft_test:
 	@mkdir -p git
 	@echo 'package git; const (Sha1 string=""; BuildAt string=""; Version string=""; Golang string="")' > git/git.go
 	@go run make.go -main $(ENTRY) -binary $(FT_BIN) -name $(FT_NAME) -build-dir build -archs "linux/amd64" -cgo \
-		-kodo-host $(TEST_KODO_HOST) -download-addr $(TEST_DOWNLOAD_ADDR) -ssl $(TEST_SSL) -port $(TEST_PORT) \
+		-kodo-host $(TEST_KODO_HOST) -download-addr $(FT_TEST_DOWNLOAD_ADDR) -ssl $(TEST_SSL) -port $(TEST_PORT) \
 		-release test -pub-dir $(PUB_DIR)
 	@strip build/$(FT_NAME)-linux-amd64/$(FT_BIN)
 	@cp osqueryd kv.json fileinfo.json build/$(FT_NAME)-linux-amd64
@@ -187,7 +187,7 @@ ft_release:
 	@mkdir -p git
 	@echo 'package git; const (Sha1 string=""; BuildAt string=""; Version string=""; Golang string="")' > git/git.go
 	@go run make.go -main $(ENTRY) -binary $(FT_BIN) -name $(FT_NAME) -build-dir build -archs "linux/amd64" -cgo \
-		-kodo-host $(RELEASE_KODO_HOST) -download-addr $(RELEASE_DOWNLOAD_ADDR) -ssl $(RELEASE_SSL) -port $(RELEASE_PORT) \
+		-kodo-host $(RELEASE_KODO_HOST) -download-addr $(FT_RELEASE_DOWNLOAD_ADDR) -ssl $(RELEASE_SSL) -port $(RELEASE_PORT) \
 		-release release -pub-dir $(PUB_DIR)
 	@strip build/$(FT_NAME)-linux-amd64/$(FT_BIN)
 	@cp osqueryd kv.json fileinfo.json build/$(FT_NAME)-linux-amd64
