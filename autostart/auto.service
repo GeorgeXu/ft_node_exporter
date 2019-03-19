@@ -2,17 +2,17 @@
 # systemd serivce setting
 #
 [Unit]
-Description=cloudcare profwang_probe
+Description=cloudcare ft_node_exporter 
 After=network.target
 
 [Service]
 Environment=HOME=/root
-WorkingDirectory=/usr/local/cloudcare/profwang_probe
+WorkingDirectory=/usr/local/cloudcare/ft_node_exporter
 ExecReload=/bin/kill -2 $MAINPID
 KillMode=process
 Restart=always
 RestartSec=3s
-ExecStart=/usr/local/cloudcare/profwang_probe/profwang_probe --cfg /usr/local/cloudcare/profwang_probe/profwang_probe.yml
+ExecStart=/usr/local/cloudcare/ft_node_exporter/ft_node_exporter
 
 [Install]
 WantedBy=default.target

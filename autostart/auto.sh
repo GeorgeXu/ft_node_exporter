@@ -17,17 +17,16 @@
 #   2. custom env info
 ### END INIT INFO
 
-SERVICE=profwang_probe
-INSTALL_DIR="/usr/local/cloudcare/profwang_probe"
+SERVICE=ft_node_exporter
+INSTALL_DIR="/usr/local/cloudcare/${SERVICE}"
 BINARY="${INSTALL_DIR}/${SERVICE}"
-YAML_CFG="${INSTALL_DIR}/${SERVICE}.yml"
 PID="${INSTALL_DIR}/${SERVICE}".pid
 LOG="${INSTALL_DIR}/${SERVICE}".log
 
 start() {
 
     printf "$SERVICE starting... "
-    (${BINARY} --cfg "${YAML_CFG}" &) # run in backend
+    (${BINARY} &) # run in backend
 
     for i in {1..5}
     do

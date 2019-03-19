@@ -36,10 +36,6 @@ var (
 
 	disableExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).").Bool()
 
-	flagInit    = kingpin.Flag("init", `init collector`).Bool()
-	flagUpgrade = kingpin.Flag("upgrade", ``).Bool()
-	flagHost    = kingpin.Flag("host", `eg. ip addr`).Default().String()
-
 	flagBindAddr = kingpin.Flag("bind-addr", `http server bind addr`).Default(`localhost:9100`).String()
 
 	flagKvCfg       = kingpin.Flag("env-cfg", "env-collector configure").Default(`/usr/local/cloudcare/ft_profwang_probe/kv.json`).String()
