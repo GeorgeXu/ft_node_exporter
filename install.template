@@ -37,7 +37,7 @@ within_docker=0
 single_mode=1
 enable_all=1
 host_ip="default"
-bind_addr="localhost:9100"
+bind_addr="localhost:9200"
 
 while [[ $# > 1 ]]
 do
@@ -204,26 +204,21 @@ fi
 # init settings
 ########################################################
 
+printf "starting ${service_name} ...\n" | tee -a ${install_log}
 #if [ $upgrade_flag -eq 0 ]; then
 #  printf "init ${service_name} ...\n" | tee -a ${install_log}
-#  if ${binary} --init \
-#		--enable-all ${enable_all} \
-#    --host "${host_ip}" \
-#		--env-cfg "${env_cfg}" \
-#		--fileinfo-cfg "${fileinfo_cfg}" \
-#		--bind-addr "${bind_addr}" &> ${log} & ; then
-#
-#    printf "ok\n" | tee -a ${install_log}
-#  else
-#    printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
-#		echo "${binary}" --init --enable-all ${enable_all}  --host "${host_ip}" --bind-addr "${bind_addr}" | tee -a ${install_log}
-#    exit 1
-#  fi
-#else
-#	printf "new ${service_name} download ok\n" | tee -a ${install_log}
-#fi
+if ${binary}  --enable-all ${enable_all} \
+    --host "${host_ip}" \
+	--env-cfg "${env_cfg}" \
+	--fileinfo-cfg "${fileinfo_cfg}" \
+	--bind-addr "${bind_addr}" &> ${log} & ; then
 
-printf "starting ${service_name} ...\n" | tee -a ${install_log}
+    printf "ok\n" | tee -a ${install_log}
+else
+    printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
+		echo "${binary}" --init --enable-all ${enable_all}  --host "${host_ip}" --bind-addr "${bind_addr}" | tee -a ${install_log}
+    exit 1
+fi
 
 #(${binary} --cfg "${yml_cfg}" &> ${log} &)
 #exit 0
@@ -243,72 +238,72 @@ printf "starting ${service_name} ...\n" | tee -a ${install_log}
 #   debian 8.9 是通过 systemd 启动的
 #   opensuse 13.1 是通过 systemd 启动的
 ########################################################
-if hash systemctl 2>/dev/null; then
-
-	printf "${service_name} init by systemctl...\n" | tee -a ${install_log}
-
-  systemctl stop "${service_name}" > /dev/null 2>&1
-  systemctl disable "${service_name}" > /dev/null 2>&1
-  systemd_path="/lib/systemd"
-  if [ ! -e "${systemd_path}" ];then
-    systemd_path="/etc/systemd"
-  fi 
-
-  if cp "${install_dir}/autostart/auto.service" "${systemd_path}/system/${service_name}.service"; then
-    systemctl enable "${service_name}".service
-    systemctl start "${service_name}".service
-  else
-    printf "failed.\n" | tee -a "${install_log}"
-    exit -1
-  fi
-else
-  if hash init-checkconf 2>/dev/null; then
-
-    printf "${service_name} init by new upstart...\n" | tee -a "${install_log}"
-
-    service "${service_name}" stop > /dev/null 2>&1
-
-    if cp "${install_dir}/autostart/auto.conf" "/etc/init/${service_name}.conf" ; then
-      service "${service_name}" start
-    else
-      printf "failed.\n" | tee -a "${install_log}"
-      exit -1
-    fi
-  else
-    if hash initctl 2>/dev/null; then
-
-      printf "${service_name} init by old upstart...\n" | tee -a "${install_log}"
-
-      service "${service_name}" stop > /dev/null 2>&1
-      stop "${service_name}" > /dev/null 2>&1
-
-      if cp "${install_dir}/autostart/auto.conf" "/etc/init/${service_name}.conf" ; then
-        start "${service_name}"
-      else
-        printf "failed.\n" | tee -a "${install_log}"
-        exit -1
-      fi
-    else
-      printf "${service_name} init by init.d...\n" | tee -a "${install_log}"
-
-      service "${service_name}" stop > /dev/null 2>&1
-
-      if cp "${install_dir}/autostart/auto.sh" "/etc/init.d/${service_name}" ; then
-        chmod +x "/etc/init.d/${service_name}"
-
-        if hash update-rc.d 2>/dev/null; then
-          update-rc.d "${service_name}" defaults > /dev/null 2>&1
-        else
-          chkconfig --add "${service_name}" > /dev/null 2>&1
-        fi
-
-        service "${service_name}" start
-      else
-        printf "failed.\n" | tee -a "${install_log}"
-        exit -1
-      fi
-    fi
-  fi
-fi
+#if hash systemctl 2>/dev/null; then
+#
+#	printf "${service_name} init by systemctl...\n" | tee -a ${install_log}
+#
+#  systemctl stop "${service_name}" > /dev/null 2>&1
+#  systemctl disable "${service_name}" > /dev/null 2>&1
+#  systemd_path="/lib/systemd"
+#  if [ ! -e "${systemd_path}" ];then
+#    systemd_path="/etc/systemd"
+#  fi 
+#
+#  if cp "${install_dir}/autostart/auto.service" "${systemd_path}/system/${service_name}.service"; then
+#    systemctl enable "${service_name}".service
+#    systemctl start "${service_name}".service
+#  else
+#    printf "failed.\n" | tee -a "${install_log}"
+#    exit -1
+#  fi
+#else
+#  if hash init-checkconf 2>/dev/null; then
+#
+#    printf "${service_name} init by new upstart...\n" | tee -a "${install_log}"
+#
+#    service "${service_name}" stop > /dev/null 2>&1
+#
+#    if cp "${install_dir}/autostart/auto.conf" "/etc/init/${service_name}.conf" ; then
+#      service "${service_name}" start
+#    else
+#      printf "failed.\n" | tee -a "${install_log}"
+#      exit -1
+#    fi
+#  else
+#    if hash initctl 2>/dev/null; then
+#
+#      printf "${service_name} init by old upstart...\n" | tee -a "${install_log}"
+#
+#      service "${service_name}" stop > /dev/null 2>&1
+#      stop "${service_name}" > /dev/null 2>&1
+#
+#      if cp "${install_dir}/autostart/auto.conf" "/etc/init/${service_name}.conf" ; then
+#        start "${service_name}"
+#      else
+#        printf "failed.\n" | tee -a "${install_log}"
+#        exit -1
+#      fi
+#    else
+#      printf "${service_name} init by init.d...\n" | tee -a "${install_log}"
+#
+#      service "${service_name}" stop > /dev/null 2>&1
+#
+#      if cp "${install_dir}/autostart/auto.sh" "/etc/init.d/${service_name}" ; then
+#        chmod +x "/etc/init.d/${service_name}"
+#
+#        if hash update-rc.d 2>/dev/null; then
+#          update-rc.d "${service_name}" defaults > /dev/null 2>&1
+#        else
+#          chkconfig --add "${service_name}" > /dev/null 2>&1
+#        fi
+#
+#        service "${service_name}" start
+#      else
+#        printf "failed.\n" | tee -a "${install_log}"
+#        exit -1
+#      fi
+#    fi
+#  fi
+#fi
 
 printf "Success!\n" | tee -a ${install_log}
