@@ -10,7 +10,7 @@ bin_name="ft_node_exporter"
 service_name="ft_node_exporter"
 
 # 安装目录设置
-install_dir="/usr/local/cloudcare/ft_profwang_probe"
+install_dir="/usr/local/cloudcare/ft_node_exporter"
 pid_file="${install_dir}/${bin_name}".pid
 yml_cfg="${install_dir}/${bin_name}".yml
 binary="${install_dir}/${bin_name}"
@@ -207,18 +207,20 @@ fi
 printf "starting ${service_name} ...\n" | tee -a ${install_log}
 #if [ $upgrade_flag -eq 0 ]; then
 #  printf "init ${service_name} ...\n" | tee -a ${install_log}
-if ${binary}  --enable-all ${enable_all} \
-    --host "${host_ip}" \
+(${binary}  --enable-all ${enable_all} \
 	--env-cfg "${env_cfg}" \
 	--fileinfo-cfg "${fileinfo_cfg}" \
-	--bind-addr "${bind_addr}" &> ${log} & ; then
+	--bind-addr "${bind_addr}" &> ${log} &) 
 
-    printf "ok\n" | tee -a ${install_log}
-else
-    printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
-		echo "${binary}" --init --enable-all ${enable_all}  --host "${host_ip}" --bind-addr "${bind_addr}" | tee -a ${install_log}
-    exit 1
-fi
+printf "Start end!\n" | tee -a ${install_log}
+exit 0
+
+#    printf "ok\n" | tee -a ${install_log}
+#else
+#    printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
+#		echo "${binary}" --enable-all ${enable_all}  --host "${host_ip}" --bind-addr "${bind_addr}" | tee -a ${install_log}
+#    exit 1
+#fi
 
 #(${binary} --cfg "${yml_cfg}" &> ${log} &)
 #exit 0
