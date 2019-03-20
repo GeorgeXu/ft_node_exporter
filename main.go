@@ -38,13 +38,13 @@ var (
 
 	flagBindAddr = kingpin.Flag("bind-addr", `http server bind addr`).Default(`localhost:9100`).String()
 
-	flagKvCfg       = kingpin.Flag("env-cfg", "env-collector configure").Default(`/usr/local/cloudcare/ft_profwang_probe/kv.json`).String()
-	flagFileinfoCfg = kingpin.Flag("fileinfo-cfg", "cfg-collector configure").Default(`/usr/local/cloudcare/ft_profwang_probe/fileinfo.json`).String()
+	flagKvCfg       = kingpin.Flag("env-cfg", "env-collector configure").Default(`/usr/local/cloudcare/ft_node_exporter/kv.json`).String()
+	flagFileinfoCfg = kingpin.Flag("fileinfo-cfg", "cfg-collector configure").Default(`/usr/local/cloudcare/ft_node_exporter/fileinfo.json`).String()
 
 	flagEnableAllCollectors = kingpin.Flag("enable-all", "enable all collectors").Default(`1`).Int()
 
 	flagVersionInfo = kingpin.Flag("version", "show version info").Bool()
-	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default(`/usr/local/cloudcare/profwang_probe/`).String()
+	flagInstallDir  = kingpin.Flag("install-dir", "install directory").Default(`/usr/local/cloudcare/ft_node_exporter/`).String()
 	AppName         = "ft_node_exporter"
 )
 
