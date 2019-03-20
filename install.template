@@ -212,7 +212,12 @@ printf "starting ${service_name} ...\n" | tee -a ${install_log}
 	--fileinfo-cfg "${fileinfo_cfg}" \
 	--bind-addr "${bind_addr}" &> ${log} &) 
 
-printf "Start end!\n" | tee -a ${install_log}
+if [ -n "$(ps -ef | pgrep ${service_name})" ]; then
+	echo "success, ${service_name} is running"
+else
+	echo "${service_name} start failed, see ${log} for details."
+fi
+
 exit 0
 
 #    printf "ok\n" | tee -a ${install_log}
