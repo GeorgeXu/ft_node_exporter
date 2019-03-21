@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -34,9 +35,8 @@ func NewKvHandler() *kvHandler {
 
 func (h *kvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	filters := r.URL.Query()["collect[]"]
-	format := r.URL.Query()["format"]
-	if len(format) > 0 {
-		kv.JsonFormat = (format[0] == "json")
+	if strings.Contains(r.URL.Path, "json") {
+		kv.JsonFormat = true
 	} else {
 		kv.JsonFormat = false
 	}
