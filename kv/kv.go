@@ -62,7 +62,7 @@ type kvCollector struct {
 }
 
 var (
-	JsonFormat = false
+	JsonFormat = true
 )
 
 func NewNodeCollector(conf *kvCfg) (Collector, error) {

@@ -30,8 +30,9 @@ import (
 )
 
 var (
-	metricsPath     = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
-	kvUrlPath       = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/kvs").String()
+	metricsPath   = kingpin.Flag("web.telemetry-path", "Path under which to expose metrics.").Default("/metrics").String()
+	kvJsonUrlPath = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/kvs/json").String()
+	//kvUrlPath       = kingpin.Flag("web.telemetry-env-info-path", "Path under which to expose env info.").Default("/kvs").String()
 	fileinfoUrlPath = kingpin.Flag("web.telemetry-file-info-path", "Path under which to expose file info.").Default("/fileinfos").String()
 
 	disableExporterMetrics = kingpin.Flag("web.disable-exporter-metrics", "Exclude metrics about the exporter itself (promhttp_*, process_*, go_*).").Bool()
@@ -76,7 +77,8 @@ Golang Version: %s
 	kv.Init(*flagKvCfg)
 	fileinfo.Init(*flagFileinfoCfg)
 
-	http.Handle(*kvUrlPath, handler.NewKvHandler())
+	http.Handle(*kvJsonUrlPath, handler.NewKvHandler())
+	http.Handle("/kvs", handler.NewKvHandler())
 	http.Handle(*fileinfoUrlPath, handler.NewFileInfoHandler())
 	http.Handle(*metricsPath, handler.NewMetricHandler(!*disableExporterMetrics))
 
