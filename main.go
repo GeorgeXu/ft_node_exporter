@@ -21,6 +21,7 @@ import (
 	_ "net/http/pprof"
 	"path/filepath"
 
+	"github.com/prometheus/common/version"
 	"github.com/prometheus/node_exporter/fileinfo"
 	"github.com/prometheus/node_exporter/git"
 	"github.com/prometheus/node_exporter/handler"
@@ -53,6 +54,9 @@ func main() {
 
 	//log.SetFlags(log.Llongfile | log.LstdFlags)
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
+
+	version.Version = git.Version
+	version.BuildDate = git.BuildAt
 
 	logfilepath := fmt.Sprintf("%s%s.log", *flagInstallDir, AppName)
 	rw, err := utils.SetLog(logfilepath)
