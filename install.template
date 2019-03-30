@@ -35,7 +35,7 @@ printf "current newest version: %s\n" "{{.Version}}" | tee -a $install_log
 upgrade_flag=0
 within_docker=0
 enable_all=1
-bind_addr="localhost:9200"
+bind_addr="0.0.0.0:9200"
 
 while [[ $# > 1 ]]
 do
@@ -48,8 +48,8 @@ do
 	shift
 	;;
 
-     --cfg)
-	yml_cfg="$2"
+     --fileinfo-cfg)
+	fileinfo_cfg="$2"
 	shift
 	;;
 
@@ -59,20 +59,9 @@ do
       shift
       ;;
 
-    --log)
-      log="$2"
-      shift
-      ;;
-
-
 
     --bind-addr)
       bind_addr="$2"
-      shift
-      ;;
-
-    --upgrade)
-      upgrade_flag="$2"
       shift
       ;;
 
@@ -167,8 +156,6 @@ fi
 ########################################################
 
 printf "starting ${service_name} ...\n" | tee -a ${install_log}
-#if [ $upgrade_flag -eq 0 ]; then
-#  printf "init ${service_name} ...\n" | tee -a ${install_log}
 (${binary}  --enable-all ${enable_all} \
 	--env-cfg "${env_cfg}" \
 	--fileinfo-cfg "${fileinfo_cfg}" \
@@ -186,97 +173,3 @@ fi
 
 exit 0
 
-#    printf "ok\n" | tee -a ${install_log}
-#else
-#    printf "failed(see %s for details)\n" "${log}" | tee -a ${install_log}
-#		echo "${binary}" --enable-all ${enable_all}  --host "${host_ip}" --bind-addr "${bind_addr}" | tee -a ${install_log}
-#    exit 1
-#fi
-
-#(${binary} --cfg "${yml_cfg}" &> ${log} &)
-#exit 0
-
-# TODO 这里的开机启动需要整理下
-
-########################################################
-# start profwang_probe and set to backend
-# 经测试(Sat Nov 11 11:04:22 CST 2017):
-#   centos 6.8 是 old upstart 启动的
-#   centos 6.9 是 old upstart 启动的
-#    通过 status profwang_probe 查看 profwang_probe 运行状态
-#   centos 7.2 是 systemd 启动的
-#   centos 7.3 是 systemd 启动的
-#    通过 systemctl status profwang_probe 查看运行状况
-#   ubuntu 14.04/16.04 是 new upstart 启动
-#   debian 8.9 是通过 systemd 启动的
-#   opensuse 13.1 是通过 systemd 启动的
-########################################################
-#if hash systemctl 2>/dev/null; then
-#
-#	printf "${service_name} init by systemctl...\n" | tee -a ${install_log}
-#
-#  systemctl stop "${service_name}" > /dev/null 2>&1
-#  systemctl disable "${service_name}" > /dev/null 2>&1
-#  systemd_path="/lib/systemd"
-#  if [ ! -e "${systemd_path}" ];then
-#    systemd_path="/etc/systemd"
-#  fi 
-#
-#  if cp "${install_dir}/autostart/auto.service" "${systemd_path}/system/${service_name}.service"; then
-#    systemctl enable "${service_name}".service
-#    systemctl start "${service_name}".service
-#  else
-#    printf "failed.\n" | tee -a "${install_log}"
-#    exit -1
-#  fi
-#else
-#  if hash init-checkconf 2>/dev/null; then
-#
-#    printf "${service_name} init by new upstart...\n" | tee -a "${install_log}"
-#
-#    service "${service_name}" stop > /dev/null 2>&1
-#
-#    if cp "${install_dir}/autostart/auto.conf" "/etc/init/${service_name}.conf" ; then
-#      service "${service_name}" start
-#    else
-#      printf "failed.\n" | tee -a "${install_log}"
-#      exit -1
-#    fi
-#  else
-#    if hash initctl 2>/dev/null; then
-#
-#      printf "${service_name} init by old upstart...\n" | tee -a "${install_log}"
-#
-#      service "${service_name}" stop > /dev/null 2>&1
-#      stop "${service_name}" > /dev/null 2>&1
-#
-#      if cp "${install_dir}/autostart/auto.conf" "/etc/init/${service_name}.conf" ; then
-#        start "${service_name}"
-#      else
-#        printf "failed.\n" | tee -a "${install_log}"
-#        exit -1
-#      fi
-#    else
-#      printf "${service_name} init by init.d...\n" | tee -a "${install_log}"
-#
-#      service "${service_name}" stop > /dev/null 2>&1
-#
-#      if cp "${install_dir}/autostart/auto.sh" "/etc/init.d/${service_name}" ; then
-#        chmod +x "/etc/init.d/${service_name}"
-#
-#        if hash update-rc.d 2>/dev/null; then
-#          update-rc.d "${service_name}" defaults > /dev/null 2>&1
-#        else
-#          chkconfig --add "${service_name}" > /dev/null 2>&1
-#        fi
-#
-#        service "${service_name}" start
-#      else
-#        printf "failed.\n" | tee -a "${install_log}"
-#        exit -1
-#      fi
-#    fi
-#  fi
-#fi
-
-printf "Success!\n" | tee -a ${install_log}
