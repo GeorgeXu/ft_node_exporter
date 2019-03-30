@@ -34,9 +34,7 @@ printf "current newest version: %s\n" "{{.Version}}" | tee -a $install_log
 
 upgrade_flag=0
 within_docker=0
-single_mode=1
 enable_all=1
-host_ip="default"
 bind_addr="localhost:9200"
 
 while [[ $# > 1 ]]
@@ -45,40 +43,16 @@ do
 
   case $opt in
 
-		--provider)
-			provider="$2"
-			shift
-			;;
+     --env-cfg)
+	env_cfg="$2"
+	shift
+	;;
 
-		--env-cfg)
-			env_cfg="$2"
-			shift
-			;;
+     --cfg)
+	yml_cfg="$2"
+	shift
+	;;
 
-		--cfg)
-			yml_cfg="$2"
-			shift
-			;;
-
-    --team-id)
-      team_id="$2"
-      shift
-      ;;
-
-    --ak)
-      ak="$2"
-      shift
-      ;;
-
-    --sk)
-      sk="$2"
-      shift
-      ;;
-
-    --single-mode)
-      single_mode="$2"
-      shift
-      ;;
 
     --enable-all)
       enable_all="$2"
@@ -90,15 +64,7 @@ do
       shift
       ;;
 
-    --remote-host)
-      remote_host="$2"
-      shift
-      ;;
 
-    --host)
-      host_ip="$2"
-      shift
-      ;;
 
     --bind-addr)
       bind_addr="$2"
@@ -110,10 +76,6 @@ do
       shift
       ;;
 
-		--docker)
-			within_docker="$2"
-			shift
-			;;
     *)
       # unknown option
     ;;
